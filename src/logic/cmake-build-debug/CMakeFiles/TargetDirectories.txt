@@ -1,0 +1,3 @@
+C:/Users/cedri/Documents/Dynamical Billiards/src/logic/cmake-build-debug/CMakeFiles/logic.dir
+C:/Users/cedri/Documents/Dynamical Billiards/src/logic/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/cedri/Documents/Dynamical Billiards/src/logic/cmake-build-debug/CMakeFiles/rebuild_cache.dir
