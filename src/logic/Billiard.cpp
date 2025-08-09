@@ -3,10 +3,11 @@
 #include <iostream>
 #include "Vec2.h"
 
+double epsilon = 1e-9;
 
 Billiard::Billiard(double a, double b, double l, double h) {
-    this->a = a; // Vertical radius
-    this->b = b; // Horizontal radius
+    this->a = a; // Horizontal radius
+    this->b = b; // Vertical radius
     this->l = l; // Horizontal component of the rectangular area
     this->h = h; // Vertical component of the rectangular area
 }
@@ -52,8 +53,8 @@ Vec2 Billiard::getIntersectionPointLines(Vec2 p, Vec2 d) const {
 
     vector<Vec2> qs = {{left + b, top}, {left + b, bottom},
                             {left, top - a}, {right, top - a}};
-    vector<Vec2> us = {{right - left - b, 0}, {right - left - b, 0},
-                            {0, bottom - top + a}, {0, bottom - top + a}};
+    vector<Vec2> us = {{2 * l, 0}, {2 * l, 0},
+                            {0,- 2 * h}, {0, -2 * h}};
 
 
     for (int i = 0; i < 4; i++) {
@@ -135,12 +136,13 @@ Vec2 Billiard::getIntersectionPointCircle(Vec2 p, Vec2 d) const {
 Vec2 Billiard::getNormal(Vec2 p) const {
     // Lines
     if (p.x > - l && p.x < l) {
-        if (p.y >= h) return {0, 1};
-        if (p.y <= -h) return {0, -1};
+        double th = -h;
+        if (p.y >= h - epsilon) return {0, 1};
+        if (p.y <= -h + epsilon) return {0, -1};
     }
     if (p.y > -h && p.y < h) {
-        if (p.x >= l) return {1, 0};
-        if (p.x <= -l) return {-1, 0};
+        if (p.x >= l - epsilon) return {1, 0};
+        if (p.x <= -l + epsilon) return {-1, 0};
     }
 
     vector<Vec2> centers = {
