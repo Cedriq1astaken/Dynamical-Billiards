@@ -1,0 +1,20 @@
+# Build folders
+build/
+logic/build/
+
+# Executables
+*.exe
+*.out
+*.o
+*.obj
+
+# Python cache files
+__pycache__/
+*.pyc
+
+# IDE/editor files
+.vscode/
+.idea/
+*.suo
+*.user
+*.log
