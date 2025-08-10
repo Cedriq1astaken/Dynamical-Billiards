@@ -1,5 +1,5 @@
-import pygame, sys, subprocess, random, os
-from math import pi, sqrt
+import pygame, sys, random, os
+from math import sqrt
 from pygame.locals import *
 import LightBeam
 import run_cpp as cpp
@@ -18,14 +18,14 @@ WINDOW_HEIGHT = 800
 cx, cy = WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2
 
 # Setup properties
-a = 0
-b = 0
-l = 200
-h = 200
+a = 200
+b = 300
+l = 0
+h = 0
 x0 = 0
-y0 = 0
-angle = 20
-count = 2
+y0 = b
+angle = -60
+count = 1
 
 ALL_POINTS = LightBeam.get_points(a, b, l, h, x0, y0, angle, count)
 
@@ -44,9 +44,9 @@ def main():
     for _ in range(len(ALL_POINTS)):
         # small random offset between -20 and +20 for each color channel
         offset = (
-            random.randint(-20, 20),
-            random.randint(-20, 20),
-            random.randint(-20, 20)
+            random.randint(-100, 100),
+            random.randint(-100, 100),
+            random.randint(-100, 100)
         )
         color_offsets.append(offset)
 
@@ -71,19 +71,20 @@ def main():
             x, y = LightBeam.move(i, t[k], POINTS, total_frames)
             trail.append((x, y))
 
-            pygame.draw.circle(WINDOW, (64, 224, 208), (cx + x, cy - y), 2)
+
+            r_offset, g_offset, b_offset = color_offsets[k]
+            pygame.draw.circle(WINDOW, (min(max(64 + r_offset, 0), 255), min(max(224 + g_offset, 0), 255), min(max(208 + b_offset, 0), 255)), (cx + x, cy - y), 2)
             for j in range(len(trail) - 1):
                 start_pos = (round(cx + trail[j][0]), round(cy - trail[j][1]))
                 end_pos = (round(cx + trail[j + 1][0]), round(cy - trail[j + 1][1]))
 
-                r_offset, g_offset, b_offset = color_offsets[k]
 
                 red = int(min(max(64 * j / (4 * len(trail)) + r_offset, 0), 255))
                 green = int(min(max(224 * j / (2 * len(trail)) + g_offset, 0), 255))
                 blue = int(min(max(208 * j / (4 * len(trail)) + b_offset, 0), 255))
 
                 pygame.draw.line(WINDOW, (red, green, blue), start_pos, end_pos, width=1)
-            if len(trail) > speed[k] * 8: trail.pop(0)
+            if len(trail) > speed[k] * 500: trail.pop(0)
 
             t[k] += 1
 

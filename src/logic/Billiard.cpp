@@ -79,10 +79,10 @@ Vec2 Billiard::getIntersectionPointLines(Vec2 p, Vec2 d) const {
 
 Vec2 Billiard::getIntersectionPointCircle(Vec2 p, Vec2 d) const {
     vector<Vec2> centers = {
-        {-l, h},  // top-left
-        { l, h},  // top-right
-        { l,  -h},  // bottom-right
-        {-l,  -h}   // bottom-left
+        {-l,  h},  // top-left
+        { l,  h},  // top-right
+        { l, -h},  // bottom-right
+        {-l, -h}   // bottom-left
     };
 
     double A = 0;
@@ -126,6 +126,7 @@ Vec2 Billiard::getIntersectionPointCircle(Vec2 p, Vec2 d) const {
                 case 3: inQuarter = (new_p.x <= c.x && new_p.y >= c.y); break; // bottom-left
             }
             if (inQuarter) {
+
                 return new_p;
             }
         }
@@ -156,13 +157,18 @@ Vec2 Billiard::getNormal(Vec2 p) const {
         Vec2 c = centers[i];
         bool inQuarter = false;
         switch (i) {
-            case 0: inQuarter = (p.x <= c.x && p.y <= c.y); break; // top-left
-            case 1: inQuarter = (p.x >= c.x && p.y <= c.y); break; // top-right
-            case 2: inQuarter = (p.x >= c.x && p.y >= c.y); break; // bottom-right
-            case 3: inQuarter = (p.x <= c.x && p.y >= c.y); break; // bottom-left
+            case 0: inQuarter = (p.x <= c.x && p.y >= c.y); break; // top-left
+            case 1: inQuarter = (p.x >= c.x && p.y >= c.y); break; // top-right
+            case 2: inQuarter = (p.x >= c.x && p.y <= c.y); break; // bottom-right
+            case 3: inQuarter = (p.x <= c.x && p.y <= c.y); break; // bottom-left
         }
-        if (inQuarter)
+        if (inQuarter) {
+            if (abs(p.x - c.x) <= epsilon && abs(p.y - c.y) <= epsilon) {
+                return {(p.x > 0 ? 1.0 : -1.0),
+                       (p.y > 0 ? 1.0 : -1.0) };
+            }
             return {(b * b * (p.x - c.x)), (a * a * (p.y - c.y))};
+        }
     }
 }
 

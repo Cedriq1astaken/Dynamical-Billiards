@@ -3,8 +3,8 @@
 #include "Billiard.h"
 #include "Vec2.h"
 #include <iostream>
-#include <fstream>
 #include <filesystem>
+#include <fstream>
 using namespace std;
 
 const double epsilon = 1e-8;
@@ -24,9 +24,7 @@ Vec2 next_reflection(Billiard b,Vec2 d, Vec2 p_i) { //p_i == point of intersecti
 }
 
 void write(double a, double b, double l, double h, Vec2 p0, double angle, int count){
-    std::cout << "Writing file in: "
-              << filesystem::current_path() << "\n";
-    fstream log_file( "./data/data.csv");
+    ofstream log_file( "./data/data.csv");
 
     Billiard billiard(a, b, l, h);
     vector<Vec2> ds;
