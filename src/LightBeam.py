@@ -2,10 +2,12 @@ from math import sqrt, pi
 import pygame.draw as draw
 import csv
 import pandas as pd
+import run_cpp as cpp
 
 epsilon = 1e-6
 
-def get_points():
+def get_points(a: float, b: float, l: float, h: float, x0: float, y0: float, angle: float, count: int):
+    cpp.run_cpp_with_args(a, b, l, h, x0, y0, angle, count)
     points = []
     file = pd.read_csv('data/data.csv')
     for i in range(len(file.keys())):

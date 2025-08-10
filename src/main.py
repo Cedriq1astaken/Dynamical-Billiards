@@ -2,8 +2,10 @@ import pygame, sys, subprocess, random, os
 from math import pi, sqrt
 from pygame.locals import *
 import LightBeam
+import run_cpp as cpp
 
 pygame.init()
+cpp.compile_cpp()
 
 # Colours
 BACKGROUND = (0, 0, 0)
@@ -14,7 +16,18 @@ fpsClock = pygame.time.Clock()
 WINDOW_WIDTH = 1000
 WINDOW_HEIGHT = 800
 cx, cy = WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2
-ALL_POINTS = LightBeam.get_points()
+
+# Setup properties
+a = 0
+b = 0
+l = 200
+h = 200
+x0 = 0
+y0 = 0
+angle = 20
+count = 2
+
+ALL_POINTS = LightBeam.get_points(a, b, l, h, x0, y0, angle, count)
 
 WINDOW = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 pygame.display.set_caption('Dynamical Billiards')
@@ -46,7 +59,7 @@ def main():
                 sys.exit()
 
         WINDOW.fill(BACKGROUND)
-        LightBeam.draw_billiard(200, 200, 200, 0, cx, cy, WINDOW)
+        LightBeam.draw_billiard(a, b, l, h, cx, cy, WINDOW)
         for k, POINTS in enumerate(ALL_POINTS):
             i = indices[k]
             trail = all_trail[k]
