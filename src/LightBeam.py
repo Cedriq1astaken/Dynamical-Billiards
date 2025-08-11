@@ -6,8 +6,9 @@ import run_cpp as cpp
 
 epsilon = 1e-6
 
-def get_points(a: float, b: float, l: float, h: float, x0: float, y0: float, angle: float, count: int):
-    cpp.run_cpp_with_args(a, b, l, h, x0, y0, angle, count)
+def get_points(shape: tuple, x0: float, y0: float, angle: float, count: int, scatterer: list = []) ->list:
+    a, b, l , h = shape
+    cpp.run_cpp_with_args(a, b, l, h, x0, y0, angle, count, scatterer)
     points = []
     file = pd.read_csv('data/data.csv')
     for i in range(len(file.keys())):
@@ -17,7 +18,8 @@ def get_points(a: float, b: float, l: float, h: float, x0: float, y0: float, ang
         points.append(current)
     return points
 
-def draw_billiard(a: float, b: float, l: float, h: float, cx: float, cy: float, screen) -> None:
+def draw_billiard(shape: tuple, cx: float, cy: float, scatterer: list, screen) -> None:
+    a, b, l , h = shape
     a, b = b, a
     color = (255, 255, 255)
     TOP = cy - a - h
@@ -36,6 +38,9 @@ def draw_billiard(a: float, b: float, l: float, h: float, cx: float, cy: float, 
     draw.arc(screen, color, (LEFT, BOTTOM - a * 2, b * 2, a * 2), pi, 3 * pi/2)
     draw.arc(screen, color, (RIGHT - 2 * b, BOTTOM - a *2, 2 * b, 2 * a), 3* pi/2, 2 * pi)
     draw.arc(screen, color, (RIGHT - 2 * b, TOP, 2 * b, 2 * a), 0, pi/2)
+
+    for scatter in scatterer:
+        draw.circle(screen, color, (cx + scatter[0], cy - scatter[1]), scatter[2], width=1)
 
 def move(i: int, t: int, points: list, total_frames) -> tuple:
     p1 = points[i]
