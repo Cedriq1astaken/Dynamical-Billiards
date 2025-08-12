@@ -49,6 +49,9 @@ vector<Circle> parseCircles(const string& s) {
             circles.push_back({{nums[0], nums[1]}, nums[2]});
         }
     }
+    for (int i = 0; i < circles.size(); i++) {
+        cout << circles[i].center << " " << circles[i].radius << endl;
+    }
     return circles;
 }
 
@@ -84,7 +87,6 @@ void write(double a, double b, double l, double h, Vec2 p0, double angle, int co
             Vec2 p = ps[j];
             Vec2 d = ds[j];
             p = billiard.getIntersectionPoint(p, d);
-            cout << p << endl;
             d = next_reflection(billiard, d, p);
             ds[j] = d;
             ps[j] = p;
@@ -92,6 +94,17 @@ void write(double a, double b, double l, double h, Vec2 p0, double angle, int co
         }
     }
 }
+// int main() {
+//
+//     SinaiBilliard b(0, 0, 200, 200);
+//     b.addScatterer({0,0}, 50);
+//
+//     Vec2 p = b.getIntersectionPoint({137.609, 200},{0.761823, -0.647785});
+//     Vec2 d = next_reflection(b, {0.761823, -0.647785}, p);
+//
+//     cout << p << "  " << d << endl;
+//     return 0;
+// }
 
 int main(int argc, char* argv[]) {
     if (argc < 10) {
@@ -112,6 +125,7 @@ int main(int argc, char* argv[]) {
         double y0    = stod(argv[6]);
         double angle = stod(argv[7]) * M_PI / 180.0;
         int count    = stoi(argv[8]);
+        cout << "Raw circles arg: '" << argv[9] << "'" << std::endl;
         vector<Circle> circles = parseCircles(argv[9]);
         write(a, b, l, h, {x0, y0}, angle, count, circles);
     }

@@ -14,8 +14,8 @@ def compile_cpp():
 
 
 def run_cpp_with_args(*args):
-    print("s")
     str_args = [str(a) for a in args]
+    print("Arguments passed to C++:", str_args)
     result = subprocess.run([executable_path] + str_args, capture_output=True, text=True)
     print(result.stdout)
 

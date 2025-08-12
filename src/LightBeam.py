@@ -6,8 +6,9 @@ import run_cpp as cpp
 
 epsilon = 1e-6
 
-def get_points(shape: tuple, x0: float, y0: float, angle: float, count: int, scatterer: list = []) ->list:
+def get_points(shape: tuple, x0: float, y0: float, angle: float, count: int, scatterer: str) ->list:
     a, b, l , h = shape
+    print(scatterer)
     cpp.run_cpp_with_args(a, b, l, h, x0, y0, angle, count, scatterer)
     points = []
     file = pd.read_csv('data/data.csv')

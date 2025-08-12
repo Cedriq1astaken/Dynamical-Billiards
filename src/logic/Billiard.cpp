@@ -65,7 +65,7 @@ Vec2 Billiard::getIntersectionPointLines(Vec2 p, Vec2 d) const {
 
         t = sub * u / cross;
         k = sub * d / cross;
-        if (0 <= t && 0 <= k && k <= 1) {
+        if (epsilon <= t && 0 <= k && k <= 1) {
             Vec2 p1 = p + d * t;
             if (p1 != p) return p1;
         }
