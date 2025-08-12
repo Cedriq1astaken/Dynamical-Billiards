@@ -18,16 +18,15 @@ WINDOW_HEIGHT = 800
 cx, cy = WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2
 
 # Setup properties
-a = 200
-b = 300
-l = 0
-h = 0
+shape = (0, 0, 350, 350)
 x0 = 0
-y0 = b
-angle = -60
+y0 = 250
+angle = 10
 count = 1
+scatterer = [(-150, 0, 150), (150, 0, 150)] # Takes tuples with a center and a radius
+scatterer_cpp = "[" + ",".join(f"({x}, {y}, {r})" for x,y,r in scatterer) + "]"
 
-ALL_POINTS = LightBeam.get_points(a, b, l, h, x0, y0, angle, count)
+ALL_POINTS = LightBeam.get_points(shape, x0, y0, angle, count, scatterer_cpp)
 
 WINDOW = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 pygame.display.set_caption('Dynamical Billiards')
@@ -59,7 +58,7 @@ def main():
                 sys.exit()
 
         WINDOW.fill(BACKGROUND)
-        LightBeam.draw_billiard(a, b, l, h, cx, cy, WINDOW)
+        LightBeam.draw_billiard(shape, cx, cy, scatterer, WINDOW)
         for k, POINTS in enumerate(ALL_POINTS):
             i = indices[k]
             trail = all_trail[k]

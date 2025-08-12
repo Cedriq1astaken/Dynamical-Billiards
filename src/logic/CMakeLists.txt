@@ -9,5 +9,7 @@ add_executable(logic
     Billiard.cpp
     Billiard.h
     Vec2.h
+    SinaiBilliard.cpp
+    SinaiBilliard.h
     main.cpp
 )

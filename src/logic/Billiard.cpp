@@ -30,10 +30,8 @@ double Billiard::getH() const {
 Vec2 Billiard::getIntersectionPointHelper(Vec2 p, Vec2 d) const {
     Vec2 result = getIntersectionPointLines(p, d);
 
-    if (result != p) {
+    if (result != p)
         return result;
-    }
-
     result = getIntersectionPointCircle(p, d);
 
     return result;
@@ -63,17 +61,16 @@ Vec2 Billiard::getIntersectionPointLines(Vec2 p, Vec2 d) const {
         cross = d * u;
         sub = q - p;
 
-        if (std::abs(cross) < 1e-8) continue;
+        if (abs(cross) < 1e-8) continue;
 
         t = sub * u / cross;
         k = sub * d / cross;
-        if (0 <= t && 0 <= k && k <= 1) {
+        if (epsilon <= t && 0 <= k && k <= 1) {
             Vec2 p1 = p + d * t;
             if (p1 != p) return p1;
         }
 
     }
-    // No valid intersection; returning ray origin as fallback
     return p;
 }
 
@@ -126,7 +123,6 @@ Vec2 Billiard::getIntersectionPointCircle(Vec2 p, Vec2 d) const {
                 case 3: inQuarter = (new_p.x <= c.x && new_p.y >= c.y); break; // bottom-left
             }
             if (inQuarter) {
-
                 return new_p;
             }
         }
@@ -171,6 +167,8 @@ Vec2 Billiard::getNormal(Vec2 p) const {
         }
     }
 }
+
+
 
 
 
