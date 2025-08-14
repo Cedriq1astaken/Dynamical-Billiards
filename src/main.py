@@ -18,15 +18,15 @@ WINDOW_HEIGHT = 800
 cx, cy = WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2
 
 # Setup properties
-shape = (0, 0, 350, 350)
+shape = (0, 0, 200, 200)
 x0 = 0
-y0 = 250
-angle = 10
-count = 1
-scatterer = [(-150, 0, 150), (150, 0, 150)] # Takes tuples with a center and a radius
+y0 = 150
+angle = -80
+count = 2
+scatterer = [(0, 0, 100)] # Takes tuples with a center and a radius
 scatterer_cpp = "[" + ",".join(f"({x}, {y}, {r})" for x,y,r in scatterer) + "]"
 
-ALL_POINTS = LightBeam.get_points(shape, x0, y0, angle, count, scatterer_cpp)
+ALL_POINTS = LightBeam.get_points(shape, x0, y0, angle, count, scatterer_cpp, WINDOW_WIDTH, WINDOW_HEIGHT)
 
 WINDOW = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 pygame.display.set_caption('Dynamical Billiards')

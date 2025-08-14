@@ -11,6 +11,9 @@ using namespace std;
 const double epsilon = 1e-8;
 const int MAX_POINTS = 1000;
 
+double WIDTH;
+double HEIGHT;
+
 ostream& operator<<(ostream& os, const Vec2& v) {
     os << v.x << "|" << v.y;
     return os;
@@ -20,11 +23,9 @@ vector<Circle> parseCircles(const string& s) {
     vector<Circle> circles;
     string trimmed = s;
 
-    // Remove brackets
     if (!trimmed.empty() && trimmed.front() == '[') trimmed.erase(0, 1);
     if (!trimmed.empty() && trimmed.back() == ']') trimmed.pop_back();
 
-    // Replace "),(" with ")|(" to split easily
     size_t pos = 0;
     while ((pos = trimmed.find("),(")) != string::npos) {
         trimmed.replace(pos, 3, ")|(");
@@ -33,8 +34,7 @@ vector<Circle> parseCircles(const string& s) {
     stringstream ss(trimmed);
     string token;
     while (getline(ss, token, '|')) {
-        // token looks like "(1.0,2.0,0.5)" or " (3.0,4.0,1.2)"
-        // Remove parentheses and spaces
+
         if (!token.empty() && token.front() == '(') token.erase(0,1);
         if (!token.empty() && token.back() == ')') token.pop_back();
 
@@ -94,24 +94,14 @@ void write(double a, double b, double l, double h, Vec2 p0, double angle, int co
         }
     }
 }
-// int main() {
-//
-//     SinaiBilliard b(0, 0, 200, 200);
-//     b.addScatterer({0,0}, 50);
-//
-//     Vec2 p = b.getIntersectionPoint({137.609, 200},{0.761823, -0.647785});
-//     Vec2 d = next_reflection(b, {0.761823, -0.647785}, p);
-//
-//     cout << p << "  " << d << endl;
-//     return 0;
-// }
+
 
 int main(int argc, char* argv[]) {
-    if (argc < 10) {
-        std::cerr << "Please provide 9 arguments.\n";
+    if (argc < 12) {
+        std::cerr << "Please provide 11 arguments.\n";
         return 1;
     }
-    if (argc > 10) {
+    if (argc > 12) {
         std::cerr << "Too many arguments.\n";
         return 1;
     }
@@ -128,6 +118,9 @@ int main(int argc, char* argv[]) {
         cout << "Raw circles arg: '" << argv[9] << "'" << std::endl;
         vector<Circle> circles = parseCircles(argv[9]);
         write(a, b, l, h, {x0, y0}, angle, count, circles);
+
+        WIDTH = stod(argv[10]);
+        HEIGHT = stod(argv[11]);
     }
     catch (const std::exception& e) {
         std::cerr << "Error parsing numeric arguments: " << e.what() << "\n";

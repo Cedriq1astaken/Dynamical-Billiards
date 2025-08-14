@@ -70,3 +70,10 @@ Vec2 SinaiBilliard::getNormal(Vec2 p) const {
     // Otherwise, it's on the outer boundary
     return outer.getNormal(p);
 }
+
+vector<vector<int>> SinaiBilliard::getBoundary(double WIDTH, double HEIGHT) const {
+    vector<vector<int>> boundary = vector((int) WIDTH/dh, vector<int>((int) HEIGHT/dh, 0.0));
+
+    
+    return boundary;
+}
