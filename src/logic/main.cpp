@@ -11,9 +11,6 @@ using namespace std;
 const double epsilon = 1e-8;
 const int MAX_POINTS = 1000;
 
-double WIDTH;
-double HEIGHT;
-
 ostream& operator<<(ostream& os, const Vec2& v) {
     os << v.x << "|" << v.y;
     return os;
@@ -42,7 +39,7 @@ vector<Circle> parseCircles(const string& s) {
         string num;
         vector<double> nums;
         while (getline(token_ss, num, ',')) {
-            nums.push_back(std::stod(num));
+            nums.push_back(stod(num));
         }
 
         if (nums.size() == 3) {
@@ -96,22 +93,12 @@ void write(double a, double b, double l, double h, Vec2 p0, double angle, int co
 }
 
 
-// int main() {
-//     cout << "working" << endl;
-//     SinaiBilliard b(200, 200, 0, 0);
-//     WIDTH = 900;
-//     HEIGHT = 900;
-//     vector<vector<int>> outlines = b.getBoundary(WIDTH, HEIGHT, 128);
-//
-//     return 0;
-// }
-
 int main(int argc, char* argv[]) {
-    if (argc < 12) {
+    if (argc < 10) {
         std::cerr << "Please provide 11 arguments.\n";
         return 1;
     }
-    if (argc > 12) {
+    if (argc > 10) {
         std::cerr << "Too many arguments.\n";
         return 1;
     }
@@ -128,9 +115,6 @@ int main(int argc, char* argv[]) {
         cout << "Raw circles arg: '" << argv[9] << "'" << std::endl;
         vector<Circle> circles = parseCircles(argv[9]);
         write(a, b, l, h, {x0, y0}, angle, count, circles);
-
-        WIDTH = stod(argv[10]);
-        HEIGHT = stod(argv[11]);
     }
     catch (const std::exception& e) {
         std::cerr << "Error parsing numeric arguments: " << e.what() << "\n";

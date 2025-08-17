@@ -18,30 +18,29 @@ quantum = False
 BACKGROUND = (0, 0, 0)
 
 # Game Setup
-FPS = 60
+FPS = 120
 fpsClock = pygame.time.Clock()
-WINDOW_WIDTH = 1000
-WINDOW_HEIGHT = 800
+WINDOW_WIDTH = 800
+WINDOW_HEIGHT = 900
 cx, cy = WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2
 
 # Setup properties
-shape = (0, 0, 300, 300)
+shape = (200, 200, 200, 0)
 x0 = 0
 y0 = 0
 angle = 0
-count = 2
+count = 1
 mass = 1
-dh = 8
+dh = 6
 scatterer = [] # Takes tuples with a center and a radius
 scatterer_cpp = "[" + ",".join(f"({x}, {y}, {r})" for x,y,r in scatterer) + "]"
 
-ALL_POINTS = LightBeam.get_points(shape, x0, y0, angle, count, scatterer_cpp, WINDOW_WIDTH, WINDOW_HEIGHT)
+ALL_POINTS = LightBeam.get_points(shape, x0, y0, angle, count, scatterer_cpp)
 
 WINDOW = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 pygame.display.set_caption('Dynamical Billiards')
 
-
-schrodinger = Schrodinger(dh, 5, 15)
+schrodinger = Schrodinger(dh, 0.5, dh * 10)
 
 # The main function that controls the game
 def main():
@@ -93,11 +92,13 @@ def main():
         prob_density /= np.max(prob_density)
         height, width = prob_density.shape
 
+        for _ in range(100):
+            psi = schrodinger.RK4_Schrodinger(psi, boundary)
+
         for i in range(height):
             for j in range(width):
                 p = prob_density[i][j]
-                pygame.draw.rect(WINDOW, LightBeam.probability_to_rgb(p), (j * dh, (WINDOW_HEIGHT - i * dh), dh, dh))
-        psi = schrodinger.RK4_Schrodinger(psi, boundary)
+                pygame.draw.rect(WINDOW, LightBeam.probability_to_rgb(p, 0.7), (j * dh, (WINDOW_HEIGHT - i * dh), dh, dh))
 
         return psi
 
@@ -113,12 +114,9 @@ def main():
                 if event.key == pygame.K_q:
                     quantum = not quantum
         WINDOW.fill(BACKGROUND)
-        if quantum:
-            psi = quantum_display(psi)
-            FPS = 30
-        else:
-            classical_display()
-            FPS = 60
+        if quantum: psi = quantum_display(psi)
+        else: classical_display()
+
         LightBeam.draw_billiard(shape, cx, cy, scatterer, WINDOW)
 
 

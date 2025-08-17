@@ -1,5 +1,5 @@
 import numpy as np
-from math import cos, sin
+from math import cos, sin, pi
 
 class Schrodinger:
     def __init__(self, dh, dt, sigma):
@@ -17,59 +17,29 @@ class Schrodinger:
             return 0.0 + 0.0j
         return psi[i, j]
 
-    def laplacian(self, psi, boundary, i, j):
-        center = psi[i, j]
-
-        d2x = (self.getPsiSafe(psi, boundary, i+1, j)
-               - 2.0*center
-               + self.getPsiSafe(psi, boundary, i-1, j)) / (self.dh**2)
-
-        d2y = (self.getPsiSafe(psi, boundary, i, j+1)
-               - 2.0*center
-               + self.getPsiSafe(psi, boundary, i, j-1)) / (self.dh**2)
-
-        return d2x + d2y
+    def laplacian(self, psi, boundary, dh):
+        lap = (
+                np.roll(psi, 1, axis=0) + np.roll(psi, -1, axis=0) +
+                np.roll(psi, 1, axis=1) + np.roll(psi, -1, axis=1) -
+                4 * psi
+        ) / (dh ** 2)
+        lap[boundary == 1] = 0
+        return lap
 
     def RK4_Schrodinger(self, psi, boundary):
-        Nx, Ny = psi.shape
+        def f(psi):
+            return self.im * self.laplacian(psi, boundary, self.dh)
 
-        k1 = np.zeros_like(psi, dtype=np.complex128)
-        k2 = np.zeros_like(psi, dtype=np.complex128)
-        k3 = np.zeros_like(psi, dtype=np.complex128)
-        k4 = np.zeros_like(psi, dtype=np.complex128)
+        k1 = f(psi)
+        k2 = f(psi + 0.5 * self.dt * k1)
+        k3 = f(psi + 0.5 * self.dt * k2)
+        k4 = f(psi + self.dt * k3)
 
-        # 1. k1
-        for i in range(Nx):
-            for j in range(Ny):
-                k1[i, j] = self.im * 0.5 * self.laplacian(psi, boundary, i, j)
-
-        # 2. k2
-        map_temp = psi + (self.dt/2.0) * k1
-        for i in range(Nx):
-            for j in range(Ny):
-                k2[i, j] = self.im * 0.5 * self.laplacian(map_temp, boundary, i, j)
-
-        # 3. k3
-        map_temp = psi + (self.dt/2.0) * k2
-        for i in range(Nx):
-            for j in range(Ny):
-                k3[i, j] = self.im * 0.5 * self.laplacian(map_temp, boundary, i, j)
-
-        # 4. k4
-        map_temp = psi + self.dt * k3
-        for i in range(Nx):
-            for j in range(Ny):
-                k4[i, j] = self.im * 0.5 * self.laplacian(map_temp, boundary, i, j)
-
-        # 5. Combine
-        new_map = psi + (self.dt/6.0) * (k1 + 2*k2 + 2*k3 + k4)
-
-        return new_map
+        return  psi + (self.dt/6) * (k1 + 2*k2 + 2*k3 + k4)
 
     def gaussian_packet(self, nx, ny, x0, y0, k, theta):
-        kx = k * cos(theta)
-        ky = k * sin(theta)
-
+        kx = -100 * k * cos(theta)
+        ky = -100 * k * sin(theta)
         x = (np.arange(nx) - nx // 2) * self.dh
         y = (np.arange(ny) - ny // 2) * self.dh
 

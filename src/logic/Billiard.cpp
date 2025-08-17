@@ -82,6 +82,15 @@ Vec2 Billiard::getIntersectionPointCircle(Vec2 p, Vec2 d) const {
         {-l, -h}   // bottom-left
     };
 
+
+    if (a == 0 && b == 0) {
+        for (Vec2 c : centers) {
+            double t1 = (c.x - p.x)/d.x;
+            double t2 = (c.y - p.y)/d.y;
+            if (abs(t1 - t2) < epsilon && t1 > epsilon) return c;
+        }
+    }
+
     double A = 0;
     double B = 0;
     double C = 0;

@@ -8,9 +8,11 @@ import run_cpp as cpp
 
 epsilon = 1e-6
 
-def get_points(shape: tuple, x0: float, y0: float, angle: float, count: int, scatterer: str, w: float, h: float) ->list:
+def get_points(shape: tuple, x0: float, y0: float, angle: float, count: int, scatterer: str) ->list:
     a, b, l , h = shape
-    cpp.run_cpp_with_args(a, b, l, h, x0, y0, angle, count, scatterer, w, h)
+
+    print(a, b, l, h, x0, y0, angle, count, scatterer)
+    cpp.run_cpp_with_args(a, b, l, h, x0, y0, angle, count, scatterer)
     points = []
     file = pd.read_csv('data/classical_data.csv')
     for i in range(len(file.keys())):
@@ -121,20 +123,27 @@ def get_boundary(shape: tuple, scatterer, width, height, dh):
 
     return boundary
 
-def probability_to_rgb(p):
-    p = max(0.0, min(1.0, p))
 
-    if p < 0.2:
-        # Black (0,0,0) => Purple (128,0,128)
-        t = p / 0.2
-        r = int(128 * t)
-        g = 0
-        b = int(128 * t)
+def probability_to_rgb(p, gamma=0.5):
+    # Clamp
+    p = max(0.0, min(1.0, p))
+    # Boost contrast: gamma < 1 brightens high p
+    p = p ** gamma
+
+    if p < 0.5:
+        # Black → Cyan
+        t = p / 0.5
+        r = 0
+        g = int(255 * t)
+        b = int(255 * t)
     else:
-        # Purple (128,0,128) => White (255,255,255)
-        t = (p - 0.2) / 0.8
-        r = int(128 + 127 * t)
-        g = int(0 + 255 * t)
-        b = int(128 + 127 * t)
+        # Cyan → Magenta
+        t = (p - 0.5) / 0.5
+        r = int(255 * t)
+        g = int(255 * (1 - t))
+        b = 255
+
+    return (r, g, b)
+
 
     return (r, g, b)
