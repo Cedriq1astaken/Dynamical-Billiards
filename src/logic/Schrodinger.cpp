@@ -6,29 +6,37 @@
 using namespace std;
 using Complex = complex<double>;
 
-Complex Schrodinger::laplacian(
+Complex Schrodinger::getPsiSafe(
     const vector<vector<Complex>>& psi,
+    const vector<vector<int>>& boundary,
     int i, int j
 ) {
   int Nx = psi.size();
   int Ny = psi[0].size();
 
-  // Dirichlet boundary (psi = 0 outside domain)
-  Complex psi_ip1 = (i + 1 < Nx) ? psi[i + 1][j] : Complex(0.0, 0.0);
-  Complex psi_im1 = (i - 1 >= 0) ? psi[i - 1][j] : Complex(0.0, 0.0);
-  Complex psi_jp1 = (j + 1 < Ny) ? psi[i][j + 1] : Complex(0.0, 0.0);
-  Complex psi_jm1 = (j - 1 >= 0) ? psi[i][j - 1] : Complex(0.0, 0.0);
-
-  Complex center = psi[i][j];
-
-  // 2D Laplacian: d²/dx² + d²/dy²
-  Complex d2x = (psi_ip1 - 2.0 * center + psi_im1) / (dh * dh);
-  Complex d2y = (psi_jp1 - 2.0 * center + psi_jm1) / (dh * dh);
-
-  return d2x + d2y;
+  if (i < 0 || i >= Nx || j < 0 || j >= Ny) return Complex(0.0, 0.0);
+  if (boundary[i][j] == 1) return Complex(0.0, 0.0);
+  return psi[i][j];
 }
 
-vector<vector<Complex>>  Schrodinger::RK4_Schrodinger(vector<vector<Complex>> map, vector<vector<double>> boundary){
+Complex Schrodinger::laplacian(
+    const vector<vector<Complex>>& psi, vector<vector<int>>& boundary,
+    int i, int j
+    ) {
+      Complex center = psi[i][j];
+
+      Complex d2x = (getPsiSafe(psi, boundary, i+1, j)
+                    - 2.0*center
+                    + getPsiSafe(psi, boundary, i-1, j)) / (dh*dh);
+
+      Complex d2y = (getPsiSafe(psi, boundary, i, j+1)
+                    - 2.0*center
+                    + getPsiSafe(psi, boundary, i, j-1)) / (dh*dh);
+
+      return d2x + d2y;
+}
+
+vector<vector<Complex>>  Schrodinger::RK4_Schrodinger(vector<vector<Complex>> map, vector<vector<int>> boundary){
   int Nx = map.size();
   int Ny = map[0].size();
 
@@ -43,7 +51,7 @@ vector<vector<Complex>>  Schrodinger::RK4_Schrodinger(vector<vector<Complex>> ma
   // 1. Compute k1
   for(int i=0;i<Nx;i++){
     for(int j=0;j<Ny;j++){
-      k1[i][j] = im * 0.5 * laplacian(map, i, j);
+      k1[i][j] = im * 0.5 * laplacian(map, boundary, i, j);
     }
   }
 
@@ -55,7 +63,7 @@ vector<vector<Complex>>  Schrodinger::RK4_Schrodinger(vector<vector<Complex>> ma
   }
   for(int i=0;i<Nx;i++){
     for(int j=0;j<Ny;j++){
-      k2[i][j] = im * 0.5 * laplacian(map_temp, i, j);
+      k2[i][j] = im * 0.5 * laplacian(map_temp, boundary, i, j);
     }
   }
 
@@ -67,7 +75,7 @@ vector<vector<Complex>>  Schrodinger::RK4_Schrodinger(vector<vector<Complex>> ma
   }
   for(int i=0;i<Nx;i++){
     for(int j=0;j<Ny;j++){
-      k3[i][j] = im * 0.5 * laplacian(map_temp, i, j);
+      k3[i][j] = im * 0.5 * laplacian(map_temp, boundary, i, j);
     }
   }
 
@@ -79,7 +87,7 @@ vector<vector<Complex>>  Schrodinger::RK4_Schrodinger(vector<vector<Complex>> ma
   }
   for(int i=0;i<Nx;i++){
     for(int j=0;j<Ny;j++){
-      k4[i][j] = im * 0.5 * laplacian(map_temp, i, j);
+      k4[i][j] = im * 0.5 * laplacian(map_temp, boundary, i, j);
     }
   }
 

@@ -1,17 +1,18 @@
-from math import sqrt, pi
+from math import sqrt, pi, cos, sin
 import pygame.draw as draw
-import csv
+import numpy as np
 import pandas as pd
+from pandas.core.internals.base import ensure_np_dtype
+
 import run_cpp as cpp
 
 epsilon = 1e-6
 
 def get_points(shape: tuple, x0: float, y0: float, angle: float, count: int, scatterer: str, w: float, h: float) ->list:
     a, b, l , h = shape
-    print(scatterer)
     cpp.run_cpp_with_args(a, b, l, h, x0, y0, angle, count, scatterer, w, h)
     points = []
-    file = pd.read_csv('data/data.csv')
+    file = pd.read_csv('data/classical_data.csv')
     for i in range(len(file.keys())):
         current = list(file[f'p{i}'])
         for i, coords in enumerate(current):
@@ -52,3 +53,88 @@ def move(i: int, t: int, points: list, total_frames) -> tuple:
 
     return x, y
 
+def get_boundary(shape: tuple, scatterer, width, height, dh):
+    np.set_printoptions(threshold=np.inf)
+
+    m, n = int(width/dh), int(height/dh)
+
+    # Center of boundary
+    cx, cy =  m // 2, n // 2
+
+    a, b, l, h = shape
+
+    boundary = np.zeros((n, m), dtype=np.uint8)
+    lx, hy = int(l / dh), int(h / dh)
+    ax, by = int(a / dh), int(b / dh)
+
+    # # --- Rectangle walls (note: rows = y, cols = x) ---
+    # # top and bottom
+    if lx >0:
+        boundary[cy + hy + by, cx - lx: cx + lx + 1] = 1
+        boundary[cy - hy - by, cx - lx: cx + lx + 1] = 1
+    # left and right
+    if(hy > 0):
+        boundary[cy - hy: cy + hy + 1, cx - lx - ax] = 1
+        boundary[cy - hy: cy + hy + 1, cx + lx + ax] = 1
+    boundary[cy, cx] = 0
+
+    def set_pixel(x, y):
+        x, y = int(round(x)), int(round(y))
+        if 0 <= x < m and 0 <= y < n:
+            boundary[y][x] = 1
+
+    if a !=  0 or b != 0:
+        step = pi / (8 * max(ax, by))
+        centers = [
+            (cx + lx, cy - hy),  # Q1: top-right
+            (cx - lx, cy - hy),  # Q2: top-left
+            (cx - lx, cy + hy),  # Q3: bottom-left
+            (cx + lx, cy + hy)  # Q4: bottom-right
+        ]
+
+        quadrant_ranges = [
+            (0, pi / 2),  # Q1: 0° to 90°
+            (pi / 2, pi),  # Q2: 90° to 180°
+            (pi, 3 * pi / 2),  # Q3: 180° to 270°
+            (3 * pi / 2, 2 * pi)  # Q4: 270° to 360°
+        ]
+        for i, c in  enumerate(centers):
+            start, end = quadrant_ranges[i]
+            t = start
+            while t < end:
+                x = c[0] + ax * cos(t)
+                y = c[1] - by * sin(t)
+                set_pixel(x, y)
+                t += step
+
+    for scatter in scatterer:
+        c_x, c_y, r = scatter
+        step = pi / (8 * r)
+        t = 0
+        while t <= 2 * pi:
+            x = cx + (c_x + r * cos(t))/dh
+            y = cy + (c_y - r * sin(t))/dh
+            set_pixel(x, y)
+            t += step
+
+
+
+    return boundary
+
+def probability_to_rgb(p):
+    p = max(0.0, min(1.0, p))
+
+    if p < 0.2:
+        # Black (0,0,0) => Purple (128,0,128)
+        t = p / 0.2
+        r = int(128 * t)
+        g = 0
+        b = int(128 * t)
+    else:
+        # Purple (128,0,128) => White (255,255,255)
+        t = (p - 0.2) / 0.8
+        r = int(128 + 127 * t)
+        g = int(0 + 255 * t)
+        b = int(128 + 127 * t)
+
+    return (r, g, b)

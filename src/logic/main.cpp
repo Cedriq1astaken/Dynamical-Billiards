@@ -65,7 +65,7 @@ Vec2 next_reflection(SinaiBilliard b,Vec2 d, Vec2 p_i) { //p_i == point of inter
 }
 
 void write(double a, double b, double l, double h, Vec2 p0, double angle, int count, vector<Circle> scatterer){
-    ofstream log_file("./data/data.csv");
+    ofstream log_file("./data/classical_data.csv");
     SinaiBilliard billiard(a, b, l, h);
     for (auto & i : scatterer) {
         billiard.addScatterer(i.center, i.radius);
@@ -95,6 +95,16 @@ void write(double a, double b, double l, double h, Vec2 p0, double angle, int co
     }
 }
 
+
+// int main() {
+//     cout << "working" << endl;
+//     SinaiBilliard b(200, 200, 0, 0);
+//     WIDTH = 900;
+//     HEIGHT = 900;
+//     vector<vector<int>> outlines = b.getBoundary(WIDTH, HEIGHT, 128);
+//
+//     return 0;
+// }
 
 int main(int argc, char* argv[]) {
     if (argc < 12) {

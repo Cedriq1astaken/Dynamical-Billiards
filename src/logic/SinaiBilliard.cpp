@@ -4,6 +4,7 @@
 #include <limits>
 #include <cmath>
 #include <vector>
+#include <algorithm>
 
 using namespace std;
 
@@ -71,9 +72,69 @@ Vec2 SinaiBilliard::getNormal(Vec2 p) const {
     return outer.getNormal(p);
 }
 
-vector<vector<int>> SinaiBilliard::getBoundary(double WIDTH, double HEIGHT) const {
-    vector<vector<int>> boundary = vector((int) WIDTH/dh, vector<int>((int) HEIGHT/dh, 0.0));
+void drawLine(vector<vector<int>>& boundary, int x0, int y0, int x1, int y1) {
+    int dx = abs(x1 - x0);
+    int dy = abs(y1 - y0);
+    int sx = (x0 < x1) ? 1 : -1;
+    int sy = (y0 < y1) ? 1 : -1;
+    int err = dx - dy;
 
-    
+    while (true) {
+        boundary[x0][y0] = 1; // mark pixel
+        if (x0 == x1 && y0 == y1) break;
+        int e2 = 2 * err;
+        if (e2 > -dy) { err -= dy; x0 += sx; }
+        if (e2 <  dx) { err += dx; y0 += sy; }
+    }
+}
+
+vector<vector<int>> SinaiBilliard::getBoundary(double WIDTH, double HEIGHT, int depth) const {
+    int cols = (int)(WIDTH / dh);
+    int rows = (int)(HEIGHT / dh);
+    vector<vector<int>> boundary(cols, vector<int>(rows, 0));
+
+    double d_theta = 2 * M_PI / depth;
+    double theta = 0.0;
+
+    Vec2 p_first = outer.getIntersectionPointHelper({}, {cos(theta), sin(theta)});
+    int i_prev = (int)((p_first.x + WIDTH / 2) / dh);
+    int j_prev = (int)((p_first.y + HEIGHT / 2) / dh);
+
+    for (int k = 1; k <= depth; k++) {
+        theta = k * d_theta;
+        Vec2 p = outer.getIntersectionPointHelper({}, {cos(theta), sin(theta)});
+        int i = (int)((p.x + WIDTH / 2) / dh);
+        int j = (int)((p.y + HEIGHT / 2) / dh);
+
+        drawLine(boundary, i_prev, j_prev, i, j);
+
+        i_prev = i;
+        j_prev = j;
+    }
+
+    for (const Circle& circle : inner) {
+        double radius = circle.radius;
+        // Choose depth to get ~1 pixel per arc length
+        int depth = std::max((int)(2 * M_PI * radius / dh), 8);
+        d_theta = 2 * M_PI / depth;
+
+        Vec2 p_first = getIntersectionPoint(circle.center, {cos(0), sin(0)});
+        i_prev = (int)((p_first.x + WIDTH / 2) / dh);
+        j_prev = (int)((p_first.y + HEIGHT / 2) / dh);
+
+        for (int l = 1; l <= depth; l++) {
+            double theta = l * d_theta;
+            Vec2 p = getIntersectionPoint(circle.center, {cos(theta), sin(theta)});
+            int i = (int)((p.x + WIDTH / 2) / dh);
+            int j = (int)((p.y + HEIGHT / 2) / dh);
+
+            drawLine(boundary, i_prev, j_prev, i, j);
+
+            i_prev = i;
+            j_prev = j;
+        }
+    }
+
     return boundary;
 }
+
