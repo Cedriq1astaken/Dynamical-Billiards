@@ -1,29 +1,39 @@
-#ifndef SCHODINGER_H
-#define SCHODINGER_H
+#ifndef SCHRODINGER_H
+#define SCHRODINGER_H
+
 #include <vector>
 #include <complex>
 
+using std::complex;
 using namespace std;
-using Complex = complex<double>;
-
-
 class Schrodinger {
-  private:
-    double mass;
-    double planck;
-    double dh = 0.01;
-    double dt = 5e-5;
-  public:
-    vector<vector<Complex>>  RK4_Schrodinger(vector<vector<Complex>> map, vector<vector<int>> boundary);
-    Complex laplacian(
-          const vector<vector<Complex>>& psi, vector<vector<int>>& boundary,
-          int i, int j);
-    Complex getPsiSafe(
-        const vector<vector<Complex>>& psi,
-        const vector<vector<int>>& boundary,
-        int i, int j);
+public:
+    Schrodinger(double dh, double dt, double sigma);
+
+    complex<double> getPsiSafe(
+        const vector<complex<double>>& psi,
+        const vector<int>& boundary,
+        int i, int j, int Nx, int Ny
+    ) const;
+
+    vector<complex<double>> laplacian(
+        const vector<complex<double>>& psi,
+        const vector<int>& boundary, int Nx, int Ny) const;
+
+    vector<complex<double>> RK4_Schrodinger(
+        const vector<complex<double>>& psi,
+        const vector<int>& boundary, int Nx, int Ny
+    ) const;
+
+    vector<complex<double>> gaussian_packet(
+        int nx, int ny, double x0, double y0, double k, double theta
+    ) const;
+
+private:
+    double dh;
+    double dt;
+    double sigma;
+    const complex<double> im = complex<double>(0.0, 1.0);
 };
 
-
-
-#endif //SCHODINGER_H
+#endif // SCHRODINGER_H

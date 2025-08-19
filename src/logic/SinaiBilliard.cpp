@@ -88,53 +88,89 @@ void drawLine(vector<vector<int>>& boundary, int x0, int y0, int x1, int y1) {
     }
 }
 
-vector<vector<int>> SinaiBilliard::getBoundary(double WIDTH, double HEIGHT, int depth) const {
-    int cols = (int)(WIDTH / dh);
-    int rows = (int)(HEIGHT / dh);
-    vector<vector<int>> boundary(cols, vector<int>(rows, 0));
+vector<int> SinaiBilliard::getBoundary(double width, double height) const {
+    int m = static_cast<int>(width / dh);
+    int n = static_cast<int>(height / dh);
 
-    double d_theta = 2 * M_PI / depth;
-    double theta = 0.0;
+    // Center of boundary
+    int cx = m / 2;
+    int cy = n / 2;
 
-    Vec2 p_first = outer.getIntersectionPointHelper({}, {cos(theta), sin(theta)});
-    int i_prev = (int)((p_first.x + WIDTH / 2) / dh);
-    int j_prev = (int)((p_first.y + HEIGHT / 2) / dh);
+    vector<int> boundary(n * m, 0); // flattened 2D array
+    int lx = static_cast<int>(outer.getL() / dh);
+    int hy = static_cast<int>(outer.getH() / dh);
+    int ax = static_cast<int>(outer.getA() / dh);
+    int by = static_cast<int>(outer.getB() / dh);
 
-    for (int k = 1; k <= depth; k++) {
-        theta = k * d_theta;
-        Vec2 p = outer.getIntersectionPointHelper({}, {cos(theta), sin(theta)});
-        int i = (int)((p.x + WIDTH / 2) / dh);
-        int j = (int)((p.y + HEIGHT / 2) / dh);
+    auto idx = [&](int i, int j) {
+        return j * m + i;  // row-major: x=i, y=j
+    };
 
-        drawLine(boundary, i_prev, j_prev, i, j);
-
-        i_prev = i;
-        j_prev = j;
+    if (lx > 0) {
+        for (int x = cx - lx; x <= cx + lx; x++) {
+            if (cy + hy + by >= 0 && cy + hy + by < n)
+                boundary[idx(x, cy + hy + by)] = 1;
+            if (cy - hy - by >= 0 && cy - hy - by < n)
+                boundary[idx(x, cy - hy - by)] = 1;
+        }
     }
-
-    for (const Circle& circle : inner) {
-        double radius = circle.radius;
-        // Choose depth to get ~1 pixel per arc length
-        int depth = std::max((int)(2 * M_PI * radius / dh), 8);
-        d_theta = 2 * M_PI / depth;
-
-        Vec2 p_first = getIntersectionPoint(circle.center, {cos(0), sin(0)});
-        i_prev = (int)((p_first.x + WIDTH / 2) / dh);
-        j_prev = (int)((p_first.y + HEIGHT / 2) / dh);
-
-        for (int l = 1; l <= depth; l++) {
-            double theta = l * d_theta;
-            Vec2 p = getIntersectionPoint(circle.center, {cos(theta), sin(theta)});
-            int i = (int)((p.x + WIDTH / 2) / dh);
-            int j = (int)((p.y + HEIGHT / 2) / dh);
-
-            drawLine(boundary, i_prev, j_prev, i, j);
-
-            i_prev = i;
-            j_prev = j;
+    // Left and right
+    if (hy > 0) {
+        for (int y = cy - hy; y <= cy + hy; y++) {
+            if (cx - lx - ax >= 0 && cx - lx - ax < m)
+                boundary[idx(cx - lx - ax, y)] = 1;
+            if (cx + lx + ax >= 0 && cx + lx + ax < m)
+                boundary[idx(cx + lx + ax, y)] = 1;
         }
     }
 
-    return boundary;
+    boundary[idx(cx, cy)] = 0;
+
+    auto set_pixel = [&](int x, int y) {
+        if (x >= 0 && x < m && y >= 0 && y < n) {
+            boundary[idx(x, y)] = 1;
+        }
+    };
+
+    // Rounded corners
+    if (outer.getA() != 0 || outer.getB() != 0) {
+        double step = M_PI / (8.0 * max(ax, by));
+        vector<pair<int, int>> centers = {
+            {cx + lx, cy - hy},  // Q1
+            {cx - lx, cy - hy},  // Q2
+            {cx - lx, cy + hy},  // Q3
+            {cx + lx, cy + hy}   // Q4
+        };
+
+        vector<pair<double, double>> quadrant_ranges = {
+            {0, M_PI / 2},
+            {M_PI / 2, M_PI},
+            {M_PI, 3 * M_PI / 2},
+            {3 * M_PI / 2, 2 * M_PI}
+        };
+
+        for (int i = 0; i < 4; i++) {
+            auto [start, end] = quadrant_ranges[i];
+            auto [cx_, cy_] = centers[i];
+            for (double t = start; t < end; t += step) {
+                int x = static_cast<int>(round(cx_ + ax * cos(t)));
+                int y = static_cast<int>(round(cy_ - by * sin(t)));
+                set_pixel(x, y);
+            }
+        }
+    }
+
+    // Scatterers (circles)
+    for (auto [c, r] : inner) {
+        double step = M_PI / (8.0 * r);
+        for (double t = 0; t <= 2 * M_PI; t += step) {
+            int x = static_cast<int>(round(cx + (c.x + r * cos(t)) / dh));
+            int y = static_cast<int>(round(cy + (c.y - r * sin(t)) / dh));
+            set_pixel(x, y);
+        }
+    }
+
+    return boundary; // flattened n*m grid
 }
+
 

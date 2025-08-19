@@ -4,7 +4,6 @@ from pygame.locals import *
 import LightBeam
 import logic.Schrodinger
 import run_cpp as cpp
-import numpy as np
 
 from src.logic.Schrodinger import Schrodinger
 
@@ -18,7 +17,7 @@ quantum = False
 BACKGROUND = (0, 0, 0)
 
 # Game Setup
-FPS = 120
+FPS = 10
 fpsClock = pygame.time.Clock()
 WINDOW_WIDTH = 800
 WINDOW_HEIGHT = 900
@@ -31,16 +30,17 @@ y0 = 0
 angle = 0
 count = 1
 mass = 1
-dh = 6
+dh = 10
+dt = 0.5
+sigma = 10
 scatterer = [] # Takes tuples with a center and a radius
 scatterer_cpp = "[" + ",".join(f"({x}, {y}, {r})" for x,y,r in scatterer) + "]"
 
-ALL_POINTS = LightBeam.get_points(shape, x0, y0, angle, count, scatterer_cpp)
+ALL_POINTS, QUANTUM_POINTS = LightBeam.get_points(shape, x0, y0, angle, count, scatterer_cpp, WINDOW_WIDTH, WINDOW_HEIGHT, dh, dt, sigma, mass)
 
 WINDOW = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 pygame.display.set_caption('Dynamical Billiards')
 
-schrodinger = Schrodinger(dh, 0.5, dh * 10)
 
 # The main function that controls the game
 def main():
@@ -51,10 +51,7 @@ def main():
     t = [0] * len(ALL_POINTS)
     all_trail =  [[] for _ in range(len(ALL_POINTS))]
     speed = [5]* len(ALL_POINTS)
-    np.set_printoptions(threshold=np.inf)
-    boundary = LightBeam.get_boundary(shape, scatterer, WINDOW_WIDTH, WINDOW_HEIGHT, dh)
-    psi = schrodinger.gaussian_packet(boundary.shape[1], boundary.shape[0], x0, y0, mass, angle * pi/180)
-    print(psi.shape)
+
     # Logic for visualizing classical paths
     def classical_display():
         for k, POINTS in enumerate(ALL_POINTS):
@@ -87,20 +84,18 @@ def main():
                 indices[k] += 1
                 speed[k] = min(speed[k] + 0.01, 200)
 
-    def quantum_display(psi):
-        prob_density = np.abs(psi) ** 2
-        prob_density /= np.max(prob_density)
-        height, width = prob_density.shape
+    def quantum_display():
+        nx = int(WINDOW_WIDTH/dh)
+        ny = int(WINDOW_HEIGHT/dh)
+        points = QUANTUM_POINTS[t[0]]
 
-        for _ in range(100):
-            psi = schrodinger.RK4_Schrodinger(psi, boundary)
+        for i in range(ny):
+            for j in range(nx):
+                id = LightBeam.idx(i, j, nx)
+                color = LightBeam.probability_to_rgb(points[id])
+                pygame.draw.rect(WINDOW, color, (j * dh, i* dh, dh, dh))
+        t[0] += 1
 
-        for i in range(height):
-            for j in range(width):
-                p = prob_density[i][j]
-                pygame.draw.rect(WINDOW, LightBeam.probability_to_rgb(p, 0.7), (j * dh, (WINDOW_HEIGHT - i * dh), dh, dh))
-
-        return psi
 
     # The main game loop
     while looping:
@@ -114,7 +109,7 @@ def main():
                 if event.key == pygame.K_q:
                     quantum = not quantum
         WINDOW.fill(BACKGROUND)
-        if quantum: psi = quantum_display(psi)
+        if quantum: quantum_display()
         else: classical_display()
 
         LightBeam.draw_billiard(shape, cx, cy, scatterer, WINDOW)

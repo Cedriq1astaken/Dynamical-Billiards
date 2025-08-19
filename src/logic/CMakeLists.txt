@@ -11,5 +11,8 @@ add_executable(logic
     Vec2.h
     SinaiBilliard.cpp
     SinaiBilliard.h
+    Schrodinger.cpp
+    SinaiBilliard.h
+    Utils.h
     main.cpp
 )

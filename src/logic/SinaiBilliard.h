@@ -20,7 +20,7 @@ public:
     void addScatterer(Vec2 center, double radius);
     Vec2 getIntersectionPoint(Vec2 p, Vec2 d) const;
     Vec2 getNormal(Vec2 p) const;
-    vector<vector<int>> getBoundary(double WIDTH, double HEIGHT, int depth) const;
+    vector<int> getBoundary(double width, double height) const;
 };
 
 

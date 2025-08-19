@@ -8,11 +8,12 @@ import run_cpp as cpp
 
 epsilon = 1e-6
 
-def get_points(shape: tuple, x0: float, y0: float, angle: float, count: int, scatterer: str) ->list:
-    a, b, l , h = shape
 
-    print(a, b, l, h, x0, y0, angle, count, scatterer)
-    cpp.run_cpp_with_args(a, b, l, h, x0, y0, angle, count, scatterer)
+def get_points(shape: tuple, x0: float, y0: float, angle: float, count: int, scatterer: str, width, height, dh, dt,
+               sigma, k):
+    a, b, l, h = shape
+
+    cpp.run_cpp_with_args(a, b, l, h, x0, y0, angle, count, scatterer, width, height, dh, dt, sigma, k)
     points = []
     file = pd.read_csv('data/classical_data.csv')
     for i in range(len(file.keys())):
@@ -20,10 +21,20 @@ def get_points(shape: tuple, x0: float, y0: float, angle: float, count: int, sca
         for i, coords in enumerate(current):
             current[i] = tuple(map(lambda n: float(n), coords.split("|")))
         points.append(current)
-    return points
+
+    file2 = pd.read_csv('data/quantum_data.csv')
+    table = []
+    for i in range(1, len(file2)):
+        row = list(file2.iloc[i])
+        row = list(map(float, row))
+        table.append(row)
+
+
+    return points, np.array(table)
+
 
 def draw_billiard(shape: tuple, cx: float, cy: float, scatterer: list, screen) -> None:
-    a, b, l , h = shape
+    a, b, l, h = shape
     a, b = b, a
     color = (255, 255, 255)
     TOP = cy - a - h
@@ -38,30 +49,32 @@ def draw_billiard(shape: tuple, cx: float, cy: float, scatterer: list, screen) -
     draw.line(screen, color, (RIGHT, TOP + a), (RIGHT, BOTTOM - a), 1)
 
     # Quarter circles
-    draw.arc(screen, color, (LEFT, TOP, b * 2, a * 2), pi/2, pi)
-    draw.arc(screen, color, (LEFT, BOTTOM - a * 2, b * 2, a * 2), pi, 3 * pi/2)
-    draw.arc(screen, color, (RIGHT - 2 * b, BOTTOM - a *2, 2 * b, 2 * a), 3* pi/2, 2 * pi)
-    draw.arc(screen, color, (RIGHT - 2 * b, TOP, 2 * b, 2 * a), 0, pi/2)
+    draw.arc(screen, color, (LEFT, TOP, b * 2, a * 2), pi / 2, pi)
+    draw.arc(screen, color, (LEFT, BOTTOM - a * 2, b * 2, a * 2), pi, 3 * pi / 2)
+    draw.arc(screen, color, (RIGHT - 2 * b, BOTTOM - a * 2, 2 * b, 2 * a), 3 * pi / 2, 2 * pi)
+    draw.arc(screen, color, (RIGHT - 2 * b, TOP, 2 * b, 2 * a), 0, pi / 2)
 
     for scatter in scatterer:
         draw.circle(screen, color, (cx + scatter[0], cy - scatter[1]), scatter[2], width=1)
 
+
 def move(i: int, t: int, points: list, total_frames) -> tuple:
     p1 = points[i]
-    p0 = points[i -1]
+    p0 = points[i - 1]
 
-    x = p0[0] + (p1[0] - p0[0]) * t/total_frames
-    y = p0[1] + (p1[1] - p0[1]) * t/total_frames
+    x = p0[0] + (p1[0] - p0[0]) * t / total_frames
+    y = p0[1] + (p1[1] - p0[1]) * t / total_frames
 
     return x, y
+
 
 def get_boundary(shape: tuple, scatterer, width, height, dh):
     np.set_printoptions(threshold=np.inf)
 
-    m, n = int(width/dh), int(height/dh)
+    m, n = int(width / dh), int(height / dh)
 
     # Center of boundary
-    cx, cy =  m // 2, n // 2
+    cx, cy = m // 2, n // 2
 
     a, b, l, h = shape
 
@@ -71,11 +84,11 @@ def get_boundary(shape: tuple, scatterer, width, height, dh):
 
     # # --- Rectangle walls (note: rows = y, cols = x) ---
     # # top and bottom
-    if lx >0:
+    if lx > 0:
         boundary[cy + hy + by, cx - lx: cx + lx + 1] = 1
         boundary[cy - hy - by, cx - lx: cx + lx + 1] = 1
     # left and right
-    if(hy > 0):
+    if (hy > 0):
         boundary[cy - hy: cy + hy + 1, cx - lx - ax] = 1
         boundary[cy - hy: cy + hy + 1, cx + lx + ax] = 1
     boundary[cy, cx] = 0
@@ -85,7 +98,7 @@ def get_boundary(shape: tuple, scatterer, width, height, dh):
         if 0 <= x < m and 0 <= y < n:
             boundary[y][x] = 1
 
-    if a !=  0 or b != 0:
+    if a != 0 or b != 0:
         step = pi / (8 * max(ax, by))
         centers = [
             (cx + lx, cy - hy),  # Q1: top-right
@@ -100,7 +113,7 @@ def get_boundary(shape: tuple, scatterer, width, height, dh):
             (pi, 3 * pi / 2),  # Q3: 180° to 270°
             (3 * pi / 2, 2 * pi)  # Q4: 270° to 360°
         ]
-        for i, c in  enumerate(centers):
+        for i, c in enumerate(centers):
             start, end = quadrant_ranges[i]
             t = start
             while t < end:
@@ -114,12 +127,10 @@ def get_boundary(shape: tuple, scatterer, width, height, dh):
         step = pi / (8 * r)
         t = 0
         while t <= 2 * pi:
-            x = cx + (c_x + r * cos(t))/dh
-            y = cy + (c_y - r * sin(t))/dh
+            x = cx + (c_x + r * cos(t)) / dh
+            y = cy + (c_y - r * sin(t)) / dh
             set_pixel(x, y)
             t += step
-
-
 
     return boundary
 
@@ -145,5 +156,7 @@ def probability_to_rgb(p, gamma=0.5):
 
     return (r, g, b)
 
+def idx(i, j, nx) :
+    return i * nx + j
 
-    return (r, g, b)
+
