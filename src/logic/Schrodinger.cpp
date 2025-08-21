@@ -82,18 +82,19 @@ vector<complex<double>> Schrodinger::RK4_Schrodinger(
     for (int i = 0; i < Nx; i++) {
         for (int j = 0; j < Ny; j++) {
             int id = idx(i, j, Ny);
-
             res[id] = psi[id] + (dt/6.0) * (k1[id] + 2.0*k2[id] + 2.0*k3[id] + k4[id]);
         }
     }
+
+
     return res;
 }
 
 vector<complex<double>> Schrodinger::gaussian_packet(
     int nx, int ny, double x0, double y0, double k, double theta
     ) const {
-        double kx = 100.0 * k * cos(theta);
-        double ky = 100.0 * k * sin(theta);
+        double kx = -100 * k * cos(theta);
+        double ky = -100 * k * sin(theta);
 
         vector<double> x(nx), y(ny);
         for (int i = 0; i < nx; i++) x[i] = (i - nx / 2) * dh;

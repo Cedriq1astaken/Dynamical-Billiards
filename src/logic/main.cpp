@@ -1,15 +1,13 @@
 #include <iostream>
 #include <cmath>
-#include "Billiard.h"
 #include "Vec2.h"
-#include <iostream>
 #include <filesystem>
 #include <fstream>
 #include "SinaiBilliard.h"
 #include "Schrodinger.h"
 #include "Utils.h"
-#include <filesystem>
-#include <iostream>
+#include <algorithm>
+
 namespace fs = std::filesystem;
 
 using namespace std;
@@ -73,26 +71,33 @@ Vec2 next_reflection(SinaiBilliard b,Vec2 d, Vec2 p_i) { //p_i == point of inter
     return d - n_normalized * (2 * dot);
 }
 
-SinaiBilliard write(double a, double b, double l, double h, Vec2 p0, double angle, int count, vector<Circle> scatterer){
-    ofstream log_file("./data/classical_data.csv");
+SinaiBilliard write(double a, double b, double l, double h, Vec2 p0, double angle, int count, vector<Circle> scatterer) {
+    ofstream bin_file("./data/classical_data.bin", ios::binary);
 
     SinaiBilliard billiard(a, b, l, h);
-    for (auto & i : scatterer) {
+    for (auto &i : scatterer) {
         billiard.addScatterer(i.center, i.radius);
     }
+
     vector<Vec2> ds;
     vector<Vec2> ps;
     for (int i = 0; i < count; i++) {
         ps.emplace_back(p0);
-        ds.emplace_back(cos(angle + (M_PI * i)/720), sin(angle + (M_PI * i)/720));
+        ds.emplace_back(cos(angle + (M_PI * i) / 720), sin(angle + (M_PI * i) / 720));
     }
-    for (int i = 0; i < count; i++) {
-        log_file << "p" << i << ((i == ps.size() - 1) ? "\n" : ",");
+
+    // Write metadata: count and max points
+    int max_points = MAX_POINTS;
+    bin_file.write(reinterpret_cast<const char*>(&count), sizeof(int));
+    bin_file.write(reinterpret_cast<const char*>(&max_points), sizeof(int));
+
+    for (int j = 0; j < count; j++) {
+        bin_file.write(reinterpret_cast<const char*>(&ps[j].x), sizeof(double));
+        bin_file.write(reinterpret_cast<const char*>(&ps[j].y), sizeof(double));
     }
-    for (int i = 0; i < count; i++) {
-        log_file << ps[i] << ((i == ps.size() - 1) ? "\n" : ",");
-    }
-    for (int i = 0; i < MAX_POINTS; i++) {
+
+    // Simulate and write positions
+    for (int t = 0; t < max_points; t++) {
         for (int j = 0; j < count; j++) {
             Vec2 p = ps[j];
             Vec2 d = ds[j];
@@ -100,82 +105,61 @@ SinaiBilliard write(double a, double b, double l, double h, Vec2 p0, double angl
             d = next_reflection(billiard, d, p);
             ds[j] = d;
             ps[j] = p;
-            log_file << p << ((j == ps.size() - 1) ? "\n" : ",");
+
+            double coords[2] = { p.x, p.y };
+            bin_file.write(reinterpret_cast<const char*>(coords), sizeof(coords));
         }
     }
+
     return billiard;
 }
 
-void write_quantum(double dh, double dt, double sigma, double x0, double y0, double k, double theta, double width, double height, const SinaiBilliard& billiard) {
-    ofstream log_file("./data/quantum_data.csv");
+void write_quantum(double dh, double dt, double sigma, double x0, double y0, double k, double theta,
+                   double width, double height, const SinaiBilliard& billiard) {
+
+    ofstream bin_file("./data/quantum_data.bin", ios::binary);
+    ofstream test("./data/test.txt", ios::binary);
 
     Schrodinger schrodinger(dh, dt, sigma);
     int nx = static_cast<int>(width / dh);
     int ny = static_cast<int>(height / dh);
 
-    vector<int> boundary = billiard.getBoundary(width, height);
+    vector<int> boundary = billiard.getBoundary(width, height, dh);
     vector<complex<double>> psi = schrodinger.gaussian_packet(nx, ny, x0, y0, k, theta);
 
-    // (3) Use resize instead of assign for clarity
-    vector<float> prob_density(psi.size(), 0.0f);
+    // Metadata: nx, ny, MAX_POINTS
+    int max_points = MAX_POINTS;
+    bin_file.write(reinterpret_cast<const char*>(&nx), sizeof(int));
+    bin_file.write(reinterpret_cast<const char*>(&ny), sizeof(int));
+    bin_file.write(reinterpret_cast<const char*>(&max_points), sizeof(int));
+
+    // Probability density buffer
+    vector<float> prob_density(psi.size());
+
+    auto normalize = [](vector<float>& v) {
+        float max_v = *max_element(v.begin(), v.end());
+        for (auto& p : v) p /= max_v;
+    };
+
+    // First timestep
     for (size_t i = 0; i < psi.size(); i++) {
         prob_density[i] = pow(abs(psi[i]), 2);
     }
+    normalize(prob_density);
+    bin_file.write(reinterpret_cast<const char*>(prob_density.data()), prob_density.size() * sizeof(float));
 
-    float max_p = maximum(prob_density);
-    for (float& p : prob_density) {
-        p /= max_p;
-    }
-
-    // header row: indices
-    for (int i = 0; i < nx * ny; i++) {
-        log_file << i << ",";
-    }
-    log_file << '\n';
-
-    // first timestep
-    for (auto p : prob_density) {
-        log_file << p << ",";
-    }
-    log_file << '\n';
-
-    // subsequent timesteps
-    for (int i = 0; i < MAX_POINTS; i++) {
-        switch (static_cast<int>(i * 100.0 / MAX_POINTS)) {
-            case 0:
-                cout << "0%" << "\n";
-                break;
-            case 25:
-                cout << "25%" << "\n";
-                break;
-            case 50:
-                cout << "50%" << "\n";
-                break;
-            case 75:
-                cout << "75%" << "\n";
-                break;
-            default:
-                break;
-        }
-        for (int j = 0; j < 25; j++) {
+    // Subsequent timesteps
+    for (int t = 0; t < MAX_POINTS; t++) {
+        for (int j = 0; j < 5; j++) {
             psi = schrodinger.RK4_Schrodinger(psi, boundary, nx, ny);
         }
 
-        prob_density.clear();
-        prob_density.reserve(psi.size());
-        for (auto com : psi) {
-            prob_density.emplace_back(pow(abs(com), 2));
+        for (size_t i = 0; i < psi.size(); i++) {
+            prob_density[i] = pow(abs(psi[i]), 2);
         }
+        normalize(prob_density);
 
-        max_p = maximum(prob_density);
-        for (float& p : prob_density) {
-            p /= max_p;
-        }
-
-        for (auto p : prob_density) {
-            log_file << p << ",";
-        }
-        log_file << '\n';
+        bin_file.write(reinterpret_cast<const char*>(prob_density.data()), prob_density.size() * sizeof(float));
     }
 }
 

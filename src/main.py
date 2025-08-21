@@ -11,32 +11,32 @@ pygame.init()
 cpp.compile_cpp()
 
 # Mode
-quantum = False
+quantum = True
 
 # Colours
 BACKGROUND = (0, 0, 0)
 
 # Game Setup
-FPS = 10
+FPS = 60
 fpsClock = pygame.time.Clock()
 WINDOW_WIDTH = 800
 WINDOW_HEIGHT = 900
 cx, cy = WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2
 
 # Setup properties
-shape = (200, 200, 200, 0)
+shape = (0, 0, 200, 200)
 x0 = 0
 y0 = 0
-angle = 0
+angle = 120
 count = 1
 mass = 1
-dh = 10
-dt = 0.5
-sigma = 10
+dh = 2
+dt = 0.1
+sigma = 20
 scatterer = [] # Takes tuples with a center and a radius
 scatterer_cpp = "[" + ",".join(f"({x}, {y}, {r})" for x,y,r in scatterer) + "]"
 
-ALL_POINTS, QUANTUM_POINTS = LightBeam.get_points(shape, x0, y0, angle, count, scatterer_cpp, WINDOW_WIDTH, WINDOW_HEIGHT, dh, dt, sigma, mass)
+ALL_POINTS, QUANTUM_POINTS = LightBeam.get_points(shape, x0, y0, angle, count, scatterer_cpp, WINDOW_WIDTH, WINDOW_HEIGHT, dh, dt, sigma * dt, mass)
 
 WINDOW = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 pygame.display.set_caption('Dynamical Billiards')
@@ -91,9 +91,8 @@ def main():
 
         for i in range(ny):
             for j in range(nx):
-                id = LightBeam.idx(i, j, nx)
-                color = LightBeam.probability_to_rgb(points[id])
-                pygame.draw.rect(WINDOW, color, (j * dh, i* dh, dh, dh))
+                color = LightBeam.probability_to_rgb(points[j, i])
+                pygame.draw.rect(WINDOW, color, (j * dh, i * dh, dh, dh))
         t[0] += 1
 
 
@@ -108,6 +107,8 @@ def main():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_q:
                     quantum = not quantum
+                if event.key == pygame.K_p:
+                    t[0] += 1
         WINDOW.fill(BACKGROUND)
         if quantum: quantum_display()
         else: classical_display()

@@ -3,6 +3,7 @@ import pygame.draw as draw
 import numpy as np
 import pandas as pd
 from pandas.core.internals.base import ensure_np_dtype
+import struct
 
 import run_cpp as cpp
 
@@ -15,22 +16,29 @@ def get_points(shape: tuple, x0: float, y0: float, angle: float, count: int, sca
 
     cpp.run_cpp_with_args(a, b, l, h, x0, y0, angle, count, scatterer, width, height, dh, dt, sigma, k)
     points = []
-    file = pd.read_csv('data/classical_data.csv')
-    for i in range(len(file.keys())):
-        current = list(file[f'p{i}'])
-        for i, coords in enumerate(current):
-            current[i] = tuple(map(lambda n: float(n), coords.split("|")))
-        points.append(current)
+    with open("data/classical_data.bin", "rb") as f:
+        count = struct.unpack("i", f.read(4))[0]
+        max_points = struct.unpack("i", f.read(4))[0]
 
-    file2 = pd.read_csv('data/quantum_data.csv')
-    table = []
-    for i in range(1, len(file2)):
-        row = list(file2.iloc[i])
-        row = list(map(float, row))
-        table.append(row)
+        for j in range(count):
+            particle_points = []
+            for t in range(max_points):
+                x, y = struct.unpack("dd", f.read(16))
+                particle_points.append((x, y))
+            points.append(particle_points)
+
+    data_quantum = []
+    with open("data/quantum_data.bin", "rb") as f:
+        nx = np.frombuffer(f.read(4), dtype=np.int32)[0]
+        ny = np.frombuffer(f.read(4), dtype=np.int32)[0]
+        max_points = np.frombuffer(f.read(4), dtype=np.int32)[0]
+
+        # Read all probability densities
+        data_quantum = np.frombuffer(f.read(), dtype=np.float32)
+        data_quantum = data_quantum.reshape((max_points + 1, nx, ny))  # +1 for first timestep
 
 
-    return points, np.array(table)
+    return points, data_quantum
 
 
 def draw_billiard(shape: tuple, cx: float, cy: float, scatterer: list, screen) -> None:
@@ -154,7 +162,7 @@ def probability_to_rgb(p, gamma=0.5):
         g = int(255 * (1 - t))
         b = 255
 
-    return (r, g, b)
+    return r, g, b
 
 def idx(i, j, nx) :
     return i * nx + j

@@ -88,7 +88,7 @@ void drawLine(vector<vector<int>>& boundary, int x0, int y0, int x1, int y1) {
     }
 }
 
-vector<int> SinaiBilliard::getBoundary(double width, double height) const {
+vector<int> SinaiBilliard::getBoundary(double width, double height, double dh) const {
     int m = static_cast<int>(width / dh);
     int n = static_cast<int>(height / dh);
 
@@ -103,7 +103,7 @@ vector<int> SinaiBilliard::getBoundary(double width, double height) const {
     int by = static_cast<int>(outer.getB() / dh);
 
     auto idx = [&](int i, int j) {
-        return j * m + i;  // row-major: x=i, y=j
+        return i * n + j;  // row-major: x=i, y=j
     };
 
     if (lx > 0) {
