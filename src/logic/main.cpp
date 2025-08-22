@@ -13,7 +13,7 @@ namespace fs = std::filesystem;
 using namespace std;
 
 const double epsilon = 1e-8;
-const int MAX_POINTS = 100;
+const int MAX_POINTS = 500;
 
 ostream& operator<<(ostream& os, const Vec2& v) {
     os << v.x << "|" << v.y;
@@ -116,7 +116,6 @@ SinaiBilliard write(double a, double b, double l, double h, Vec2 p0, double angl
 
 void write_quantum(double dh, double dt, double sigma, double x0, double y0, double k, double theta,
                    double width, double height, const SinaiBilliard& billiard) {
-
     ofstream bin_file("./data/quantum_data.bin", ios::binary);
     ofstream test("./data/test.txt", ios::binary);
 
@@ -150,7 +149,7 @@ void write_quantum(double dh, double dt, double sigma, double x0, double y0, dou
 
     // Subsequent timesteps
     for (int t = 0; t < MAX_POINTS; t++) {
-        for (int j = 0; j < 5; j++) {
+        for (int j = 0; j < 25; j++) {
             psi = schrodinger.RK4_Schrodinger(psi, boundary, nx, ny);
         }
 

@@ -1,5 +1,6 @@
 from math import sqrt, pi, cos, sin
 import pygame.draw as draw
+import pygame.gfxdraw as gfx
 import numpy as np
 import pandas as pd
 from pandas.core.internals.base import ensure_np_dtype
@@ -14,7 +15,7 @@ def get_points(shape: tuple, x0: float, y0: float, angle: float, count: int, sca
                sigma, k):
     a, b, l, h = shape
 
-    cpp.run_cpp_with_args(a, b, l, h, x0, y0, angle, count, scatterer, width, height, dh, dt, sigma, k)
+    cpp.run_cpp_with_args(a + epsilon, b + epsilon, l, h, x0, y0, angle, count, scatterer, width, height, dh, dt, sigma, k)
     points = []
     with open("data/classical_data.bin", "rb") as f:
         count = struct.unpack("i", f.read(4))[0]
@@ -37,7 +38,6 @@ def get_points(shape: tuple, x0: float, y0: float, angle: float, count: int, sca
         data_quantum = np.frombuffer(f.read(), dtype=np.float32)
         data_quantum = data_quantum.reshape((max_points + 1, nx, ny))  # +1 for first timestep
 
-
     return points, data_quantum
 
 
@@ -45,25 +45,30 @@ def draw_billiard(shape: tuple, cx: float, cy: float, scatterer: list, screen) -
     a, b, l, h = shape
     a, b = b, a
     color = (255, 255, 255)
+    color2 = (128, 128, 128)
     TOP = cy - a - h
     BOTTOM = cy + a + h
     LEFT = cx - b - l
     RIGHT = cx + b + l
+    width = 2
 
     # Rectangular parts
-    draw.line(screen, color, (LEFT + b, TOP), (RIGHT - b, TOP), 1)
-    draw.line(screen, color, (LEFT + b, BOTTOM), (RIGHT - b, BOTTOM), 1)
-    draw.line(screen, color, (LEFT, TOP + a), (LEFT, BOTTOM - a), 1)
-    draw.line(screen, color, (RIGHT, TOP + a), (RIGHT, BOTTOM - a), 1)
+    draw.aaline(screen, color, (LEFT + b, TOP), (RIGHT - b, TOP), width=width)
+    draw.aaline(screen, color, (LEFT + b, BOTTOM), (RIGHT - b, BOTTOM), width=width)
+    draw.aaline(screen, color, (LEFT, TOP + a), (LEFT, BOTTOM - a), width=width)
+    draw.aaline(screen, color, (RIGHT, TOP + a), (RIGHT, BOTTOM - a), width=width)
 
     # Quarter circles
-    draw.arc(screen, color, (LEFT, TOP, b * 2, a * 2), pi / 2, pi)
-    draw.arc(screen, color, (LEFT, BOTTOM - a * 2, b * 2, a * 2), pi, 3 * pi / 2)
-    draw.arc(screen, color, (RIGHT - 2 * b, BOTTOM - a * 2, 2 * b, 2 * a), 3 * pi / 2, 2 * pi)
-    draw.arc(screen, color, (RIGHT - 2 * b, TOP, 2 * b, 2 * a), 0, pi / 2)
+    draw.arc(screen, color, (LEFT, TOP, b * 2, a * 2), pi / 2, pi, width=width)
+    draw.arc(screen, color, (LEFT, BOTTOM - a * 2, b * 2, a * 2), pi, 3 * pi / 2, width=width)
+    draw.arc(screen, color, (RIGHT - 2 * b, BOTTOM - a * 2, 2 * b, 2 * a), 3 * pi / 2, 2 * pi, width=width)
+    draw.arc(screen, color, (RIGHT - 2 * b, TOP, 2 * b, 2 * a), 0, pi / 2, width=width)
 
     for scatter in scatterer:
-        draw.circle(screen, color, (cx + scatter[0], cy - scatter[1]), scatter[2], width=1)
+        gfx.filled_circle(screen, cx + scatter[0], cy - scatter[1], scatter[2] -1, color2)
+        draw.aacircle(screen, color, [cx + scatter[0], cy - scatter[1]], scatter[2], 4)
+
+
 
 
 def move(i: int, t: int, points: list, total_frames) -> tuple:

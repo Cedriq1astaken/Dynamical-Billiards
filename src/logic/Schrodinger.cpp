@@ -2,7 +2,7 @@
 #include <cmath>
 #include <numeric>
 #include "Utils.h"
-
+#include <iostream>
 using namespace std;
 
 Schrodinger::Schrodinger(double dh, double dt, double sigma)
@@ -93,8 +93,10 @@ vector<complex<double>> Schrodinger::RK4_Schrodinger(
 vector<complex<double>> Schrodinger::gaussian_packet(
     int nx, int ny, double x0, double y0, double k, double theta
     ) const {
-        double kx = -100 * k * cos(theta);
+        double kx = 100 * k * cos(theta);
         double ky = -100 * k * sin(theta);
+        cout << kx << "\n";
+        cout << ky << "\n";
 
         vector<double> x(nx), y(ny);
         for (int i = 0; i < nx; i++) x[i] = (i - nx / 2) * dh;
@@ -106,7 +108,7 @@ vector<complex<double>> Schrodinger::gaussian_packet(
         for (int i = 0; i < nx; i++) {
             for (int j = 0; j < ny; j++) {
                 double X = x[i], Y = y[j];
-                double env = exp(-((X - x0)*(X - x0) + (Y - y0)*(Y - y0)) / (4.0 * sigma * sigma));
+                double env = exp(-((X - x0)*(X - x0) + (Y - y0)*(Y - y0)) / (2.0 * sigma * sigma));
                 complex<double> plane_wave = exp(im * (kx*(X - x0) + ky*(Y - y0)));
                 psi[idx(i, j, ny)] = env * plane_wave;
                 norm += std::norm(psi[idx(i, j, ny)]);

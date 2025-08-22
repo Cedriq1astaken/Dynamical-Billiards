@@ -4,6 +4,7 @@ from pygame.locals import *
 import LightBeam
 import logic.Schrodinger
 import run_cpp as cpp
+import pygame
 
 from src.logic.Schrodinger import Schrodinger
 
@@ -11,7 +12,7 @@ pygame.init()
 cpp.compile_cpp()
 
 # Mode
-quantum = True
+quantum = False
 
 # Colours
 BACKGROUND = (0, 0, 0)
@@ -24,19 +25,19 @@ WINDOW_HEIGHT = 900
 cx, cy = WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2
 
 # Setup properties
-shape = (0, 0, 200, 200)
+shape = (200, 200, 200, 0)
 x0 = 0
-y0 = 0
-angle = 120
+y0 = 150
+angle = 40
 count = 1
-mass = 1
-dh = 2
+mass = 0.025
+dh = 50
 dt = 0.1
-sigma = 20
+sigma = dh * 25
 scatterer = [] # Takes tuples with a center and a radius
 scatterer_cpp = "[" + ",".join(f"({x}, {y}, {r})" for x,y,r in scatterer) + "]"
 
-ALL_POINTS, QUANTUM_POINTS = LightBeam.get_points(shape, x0, y0, angle, count, scatterer_cpp, WINDOW_WIDTH, WINDOW_HEIGHT, dh, dt, sigma * dt, mass)
+ALL_POINTS, QUANTUM_POINTS = LightBeam.get_points(shape, x0, y0, angle, count, scatterer_cpp, WINDOW_WIDTH, WINDOW_HEIGHT, dh, dt, sigma * dt, 0.3/dh)
 
 WINDOW = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 pygame.display.set_caption('Dynamical Billiards')
@@ -74,7 +75,7 @@ def main():
                 green = 224
                 blue = 208
 
-                pygame.draw.line(WINDOW, (red, green, blue), start_pos, end_pos, width=1)
+                pygame.draw.aalines(WINDOW, (red, green, blue), False,[start_pos, end_pos])
             if len(trail) > speed[k] * 500: trail.pop(0)
 
             t[k] += 1
@@ -110,8 +111,12 @@ def main():
                 if event.key == pygame.K_p:
                     t[0] += 1
         WINDOW.fill(BACKGROUND)
-        if quantum: quantum_display()
-        else: classical_display()
+        if quantum:
+            FPS = 30
+            quantum_display()
+        else:
+            FPS = 60
+            classical_display()
 
         LightBeam.draw_billiard(shape, cx, cy, scatterer, WINDOW)
 
