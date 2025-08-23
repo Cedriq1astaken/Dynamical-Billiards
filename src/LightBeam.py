@@ -149,23 +149,20 @@ def get_boundary(shape: tuple, scatterer, width, height, dh):
 
 
 def probability_to_rgb(p, gamma=0.5):
-    # Clamp
-    p = max(0.0, min(1.0, p))
-    # Boost contrast: gamma < 1 brightens high p
     p = p ** gamma
 
     if p < 0.5:
-        # Black → Cyan
+        # Black → Dark blue
         t = p / 0.5
         r = 0
-        g = int(255 * t)
-        b = int(255 * t)
+        g = 0
+        b = int(128 * t)   # 0 → 128
     else:
-        # Cyan → Magenta
+        # Dark blue → Light blue
         t = (p - 0.5) / 0.5
-        r = int(255 * t)
-        g = int(255 * (1 - t))
-        b = 255
+        r = int(0 + (173 - 0) * t)     # 0 → 173
+        g = int(0 + (216 - 0) * t)     # 0 → 216
+        b = int(128 + (255 - 128) * t) # 128 → 255
 
     return r, g, b
 

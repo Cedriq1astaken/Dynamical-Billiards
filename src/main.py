@@ -1,11 +1,13 @@
 import pygame, sys, random, os
 from math import sqrt, pi
+
+from pygame.display import gl_get_attribute
 from pygame.locals import *
 import LightBeam
 import logic.Schrodinger
 import run_cpp as cpp
 import pygame
-
+import time
 from src.logic.Schrodinger import Schrodinger
 
 pygame.init()
@@ -13,6 +15,7 @@ cpp.compile_cpp()
 
 # Mode
 quantum = False
+start = False
 
 # Colours
 BACKGROUND = (0, 0, 0)
@@ -20,24 +23,25 @@ BACKGROUND = (0, 0, 0)
 # Game Setup
 FPS = 60
 fpsClock = pygame.time.Clock()
-WINDOW_WIDTH = 800
+WINDOW_WIDTH = 900
 WINDOW_HEIGHT = 900
 cx, cy = WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2
 
 # Setup properties
-shape = (200, 200, 200, 0)
+shape = (400, 300, 0, 0)
 x0 = 0
-y0 = 150
-angle = 40
+y0 = 0
+angle = 0
 count = 1
-mass = 0.025
-dh = 50
-dt = 0.1
-sigma = dh * 25
+mass = 4
+dh = 4
+dt = 4
+sigma = 70
 scatterer = [] # Takes tuples with a center and a radius
 scatterer_cpp = "[" + ",".join(f"({x}, {y}, {r})" for x,y,r in scatterer) + "]"
+t1 = time.time()
 
-ALL_POINTS, QUANTUM_POINTS = LightBeam.get_points(shape, x0, y0, angle, count, scatterer_cpp, WINDOW_WIDTH, WINDOW_HEIGHT, dh, dt, sigma * dt, 0.3/dh)
+ALL_POINTS, QUANTUM_POINTS = LightBeam.get_points(shape, x0, y0, angle, count, scatterer_cpp, WINDOW_WIDTH, WINDOW_HEIGHT, dh, dt, sigma, mass)
 
 WINDOW = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 pygame.display.set_caption('Dynamical Billiards')
@@ -45,11 +49,14 @@ pygame.display.set_caption('Dynamical Billiards')
 
 # The main function that controls the game
 def main():
-    global quantum
+    print(f"Time: {(time.time() - t1) / 60.0}mn")
+    global quantum, start, FPS
     looping = True
+
     #Variables
     indices = [1] * len(ALL_POINTS)
     t = [0] * len(ALL_POINTS)
+    q = 0
     all_trail =  [[] for _ in range(len(ALL_POINTS))]
     speed = [5]* len(ALL_POINTS)
 
@@ -78,7 +85,8 @@ def main():
                 pygame.draw.aalines(WINDOW, (red, green, blue), False,[start_pos, end_pos])
             if len(trail) > speed[k] * 500: trail.pop(0)
 
-            t[k] += 1
+            if start:
+                t[k] += 1
 
             if t[k] > total_frames:
                 t[k] = 0
@@ -86,15 +94,17 @@ def main():
                 speed[k] = min(speed[k] + 0.01, 200)
 
     def quantum_display():
+        nonlocal q
         nx = int(WINDOW_WIDTH/dh)
         ny = int(WINDOW_HEIGHT/dh)
-        points = QUANTUM_POINTS[t[0]]
+        points = QUANTUM_POINTS[q]
 
         for i in range(ny):
             for j in range(nx):
                 color = LightBeam.probability_to_rgb(points[j, i])
                 pygame.draw.rect(WINDOW, color, (j * dh, i * dh, dh, dh))
-        t[0] += 1
+        if start:
+            q += 1
 
 
     # The main game loop
@@ -110,12 +120,12 @@ def main():
                     quantum = not quantum
                 if event.key == pygame.K_p:
                     t[0] += 1
+                if event.key == pygame.K_RETURN:
+                    start = not start
         WINDOW.fill(BACKGROUND)
         if quantum:
-            FPS = 30
             quantum_display()
         else:
-            FPS = 60
             classical_display()
 
         LightBeam.draw_billiard(shape, cx, cy, scatterer, WINDOW)

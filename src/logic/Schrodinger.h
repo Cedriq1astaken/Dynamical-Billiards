@@ -7,18 +7,23 @@
 using std::complex;
 using namespace std;
 class Schrodinger {
+private:
+    mutable vector<complex<double>> k1, k2, k3, k4, temp_state;
 public:
-    Schrodinger(double dh, double dt, double sigma);
-
+    Schrodinger(int Nx, int Ny, double dh, double dt, double sigma);
     complex<double> getPsiSafe(
         const vector<complex<double>>& psi,
         const vector<int>& boundary,
         int i, int j, int Nx, int Ny
     ) const;
 
-    vector<complex<double>> laplacian(
-        const vector<complex<double>>& psi,
-        const vector<int>& boundary, int Nx, int Ny) const;
+    void laplacian_inplace(const vector<complex<double>>& psi,
+                          const vector<int>& boundary,
+                          vector<complex<double>>& result,
+                          int Nx, int Ny) const;
+
+    void add_scaled_inplace(vector<complex<double>> &result, const vector<complex<double>> &A,
+                            const vector<complex<double>> &B, double scale, int size) const;
 
     vector<complex<double>> RK4_Schrodinger(
         const vector<complex<double>>& psi,

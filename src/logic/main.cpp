@@ -13,7 +13,7 @@ namespace fs = std::filesystem;
 using namespace std;
 
 const double epsilon = 1e-8;
-const int MAX_POINTS = 500;
+const int MAX_POINTS = 2000;
 
 ostream& operator<<(ostream& os, const Vec2& v) {
     os << v.x << "|" << v.y;
@@ -119,9 +119,10 @@ void write_quantum(double dh, double dt, double sigma, double x0, double y0, dou
     ofstream bin_file("./data/quantum_data.bin", ios::binary);
     ofstream test("./data/test.txt", ios::binary);
 
-    Schrodinger schrodinger(dh, dt, sigma);
     int nx = static_cast<int>(width / dh);
     int ny = static_cast<int>(height / dh);
+    Schrodinger schrodinger(nx, ny, dh, dt, sigma);
+
 
     vector<int> boundary = billiard.getBoundary(width, height, dh);
     vector<complex<double>> psi = schrodinger.gaussian_packet(nx, ny, x0, y0, k, theta);
@@ -149,7 +150,7 @@ void write_quantum(double dh, double dt, double sigma, double x0, double y0, dou
 
     // Subsequent timesteps
     for (int t = 0; t < MAX_POINTS; t++) {
-        for (int j = 0; j < 25; j++) {
+        for (int j = 0; j < 10; j++) {
             psi = schrodinger.RK4_Schrodinger(psi, boundary, nx, ny);
         }
 
