@@ -3,6 +3,10 @@
 #include <numeric>
 #include "Utils.h"
 #include <iostream>
+#include <Eigen/Core>
+#include <Spectra/GenEigsSolver.h>
+
+using namespace Spectra;
 using namespace std;
 
 Schrodinger::Schrodinger(int Nx, int Ny, double dh, double dt, double sigma)
@@ -151,5 +155,9 @@ vector<complex<double>> Schrodinger::gaussian_packet(
             }
         }
 
-        return psi;
+    return psi;
+}
+
+void EigenVectors() {
+    Eigen::Matrix2cd M = Eigen::Matrix2cd::Identity();
 }
