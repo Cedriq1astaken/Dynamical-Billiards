@@ -2,8 +2,11 @@
 #include <vector>
 #include <iostream>
 #include "Vec2.h"
+#include "raylib.h"
+#include "Utils.h"
 
 double epsilon = 1e-9;
+double pi = M_PI;
 
 Billiard::Billiard(double a, double b, double l, double h) {
     this->a = a; // Horizontal radius
@@ -177,6 +180,24 @@ Vec2 Billiard::getNormal(Vec2 p) const {
     }
 }
 
+void Billiard::draw(double cx, double cy) const{
+    double TOP = cy - a - h;
+    double BOTTOM = cy + a + h;
+    double LEFT = cx - b - l;
+    double RIGHT = cx + b + l;
+
+    // Lines
+    DrawLine(LEFT + b, TOP, RIGHT - b, TOP, WHITE);
+    DrawLine(LEFT + b, BOTTOM, RIGHT - b, BOTTOM, WHITE);
+    DrawLine(LEFT, TOP + a, LEFT, BOTTOM - a, WHITE);
+    DrawLine(RIGHT, TOP + a, RIGHT, BOTTOM - a, WHITE);
+
+    // Arcs
+    DrawEllipseArc({(float)(cx - l), (float)(cy + h)}, a, b,  90.0, 180, 60, WHITE);
+    DrawEllipseArc({(float)(cx - l), (float)(cy - h)}, a, b, 180.0, 270.0, 60, WHITE);
+    DrawEllipseArc({(float)(cx + l), (float)(cy - h)}, a, b,  270.0, 360.0, 60, WHITE);
+    DrawEllipseArc({(float)(cx + l), (float)(cy + h)}, a, b, 0, 90.0, 60, WHITE);
+}
 
 
 
