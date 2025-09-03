@@ -1,19 +1,13 @@
 #include <iostream>
 #include <cmath>
 #include "Vec2.h"
-#include <filesystem>
 #include <fstream>
 #include "SinaiBilliard.h"
 #include "Schrodinger.h"
 #include "Utils.h"
 #include <algorithm>
-
-namespace fs = std::filesystem;
-
-using namespace std;
-
-const double epsilon = 1e-8;
-const int MAX_POINTS = 2000;
+#include "raylib.h"
+#include "writer.h"
 
 ostream& operator<<(ostream& os, const Vec2& v) {
     os << v.x << "|" << v.y;
@@ -24,8 +18,17 @@ float maximum(vector<float> v) {
     float ans = 0.0;
     for (auto i: v)
         ans = max(i, ans);
-
     return  ans;
+}
+
+Vec2 move(int i, int t, vector<Vec2> points, int total_frames) {
+    Vec2 p1 = points[i];
+    Vec2 p0 = points[i - 1];
+
+    double x = p0.x + (p1.x - p0.x) * t / total_frames;
+    double y = p0.y + (p1.y - p0.y) * t / total_frames;
+
+    return {x, y};
 }
 
 vector<Circle> parseCircles(const string& s) {
@@ -71,19 +74,37 @@ Vec2 next_reflection(SinaiBilliard b,Vec2 d, Vec2 p_i) { //p_i == point of inter
     return d - n_normalized * (2 * dot);
 }
 
-SinaiBilliard write(double a, double b, double l, double h, Vec2 p0, double angle, int count, vector<Circle> scatterer) {
-    ofstream bin_file("./data/classical_data.bin", ios::binary);
+Color probability_to_rgb(float p) {
+    Color color;
 
-    SinaiBilliard billiard(a, b, l, h);
-    for (auto &i : scatterer) {
-        billiard.addScatterer(i.center, i.radius);
+    if (p < 0.5){
+        double t = p / 0.5;
+        color.r = 0;
+        color.g = 0;
+        color.b = static_cast<unsigned char>(128 * t);
     }
+    else {
+        double t = (p - 0.5) / 0.5;
+        color.r = static_cast<unsigned char>(173 * t);
+        color.g = static_cast<unsigned char>(216 * t);
+        color.b = static_cast<unsigned char>(128 + (127 * t));
+    }
+
+    color.a = 255;
+    return color;
+}
+
+vector<vector<Vec2>> write_classical(SinaiBilliard billiard, Vec2 p0, double angle, int count) {
+    ofstream bin_file("../../data/classical_data.bin", ios::binary);
 
     vector<Vec2> ds;
     vector<Vec2> ps;
+    vector<vector<Vec2>> trajectories(count, vector<Vec2>(MAX_POINTS));
+
     for (int i = 0; i < count; i++) {
         ps.emplace_back(p0);
         ds.emplace_back(cos(angle + (M_PI * i) / 720), sin(angle + (M_PI * i) / 720));
+        trajectories[i][0] = ps[i];
     }
 
     // Write metadata: count and max points
@@ -107,31 +128,31 @@ SinaiBilliard write(double a, double b, double l, double h, Vec2 p0, double angl
             ps[j] = p;
 
             double coords[2] = { p.x, p.y };
+            trajectories[j][t] = p;
             bin_file.write(reinterpret_cast<const char*>(coords), sizeof(coords));
         }
     }
-
-    return billiard;
+    return trajectories;
 }
 
-void write_quantum(double dh, double dt, double sigma, double x0, double y0, double k, double theta,
-                   double width, double height, const SinaiBilliard& billiard) {
+vector<vector<float>> write_quantum(double dh, double dt, double sigma, double x0, double y0, double k, double theta,
+                   const SinaiBilliard& billiard) {
     ofstream bin_file("./data/quantum_data.bin", ios::binary);
-    ofstream test("./data/test.txt", ios::binary);
 
-    int nx = static_cast<int>(width / dh);
-    int ny = static_cast<int>(height / dh);
+    int nx = static_cast<int>(WIDTH / dh);
+    int ny = static_cast<int>(HEIGHT / dh);
     Schrodinger schrodinger(nx, ny, dh, dt, sigma);
 
-
-    vector<int> boundary = billiard.getBoundary(width, height, dh);
+    vector<int> boundary = billiard.getBoundary(WIDTH, HEIGHT, dh);
     vector<complex<double>> psi = schrodinger.gaussian_packet(nx, ny, x0, y0, k, theta);
+    vector<vector<float>> densities;
 
     // Metadata: nx, ny, MAX_POINTS
     int max_points = MAX_POINTS;
     bin_file.write(reinterpret_cast<const char*>(&nx), sizeof(int));
     bin_file.write(reinterpret_cast<const char*>(&ny), sizeof(int));
     bin_file.write(reinterpret_cast<const char*>(&max_points), sizeof(int));
+
 
     // Probability density buffer
     vector<float> prob_density(psi.size());
@@ -147,6 +168,7 @@ void write_quantum(double dh, double dt, double sigma, double x0, double y0, dou
     }
     normalize(prob_density);
     bin_file.write(reinterpret_cast<const char*>(prob_density.data()), prob_density.size() * sizeof(float));
+    densities.emplace_back(prob_density);
 
     // Subsequent timesteps
     for (int t = 0; t < MAX_POINTS; t++) {
@@ -158,56 +180,8 @@ void write_quantum(double dh, double dt, double sigma, double x0, double y0, dou
             prob_density[i] = pow(abs(psi[i]), 2);
         }
         normalize(prob_density);
-
+        densities.emplace_back(prob_density);
         bin_file.write(reinterpret_cast<const char*>(prob_density.data()), prob_density.size() * sizeof(float));
     }
-}
-
-int main(int argc, char* argv[]) {
-    if (argc < 16) {
-        cout << "Please provide 15 arguments.\n";
-        return 1;
-    }
-    if (argc > 16) {
-        cout << "Too many arguments.\n";
-        return 1;
-    }
-    cout << "Starting..\n";
-
-    try {
-        cout << "Classical running" << "\n";
-        double a     = stod(argv[1]);
-        double b     = stod(argv[2]);
-        double l     = stod(argv[3]);
-        double h     = stod(argv[4]);
-        double x0    = stod(argv[5]);
-        double y0    = stod(argv[6]);
-        double angle = stod(argv[7]) * M_PI / 180.0;
-        int count    = stoi(argv[8]);
-
-        vector<Circle> circles = parseCircles(argv[9]);
-        SinaiBilliard billiard = write(a, b, l, h, {x0, y0}, angle, count, circles);
-        cout << "Classical done" << "\n";
-
-        cout << "Quantum running" << "\n";
-
-
-        double WIDTH  = stod(argv[10]);
-        double HEIGHT = stod(argv[11]);
-        double dh     = stod(argv[12]);
-        double dt     = stod(argv[13]);
-        double sigma  = stod(argv[14]);
-        double k      = stod(argv[15]);
-
-        write_quantum(dh, dt, sigma, x0, y0, k, angle, WIDTH, HEIGHT, billiard);
-        cout << "Quantum done" << "\n";
-
-    }
-
-    catch (const std::exception& e) {
-        std::cerr << "Error parsing numeric arguments: " << e.what() << "\n";
-        return 1;
-    }
-
-    return 0;
+    return densities;
 }

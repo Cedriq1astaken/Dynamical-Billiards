@@ -25,6 +25,7 @@ class Billiard {
         Vec2 getIntersectionPointLines(Vec2 p, Vec2 d) const;
         Vec2 getIntersectionPointCircle(Vec2 p, Vec2 d) const;
         Vec2 getNormal(Vec2 p) const;
+        void draw(double cx, double cy) const;
 
         // Static methods
         Vec2 static getShortestIntersectionPoint();

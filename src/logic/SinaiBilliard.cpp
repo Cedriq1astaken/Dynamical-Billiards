@@ -5,6 +5,7 @@
 #include <cmath>
 #include <vector>
 #include <algorithm>
+#include <raylib.h>
 
 using namespace std;
 
@@ -171,6 +172,13 @@ vector<int> SinaiBilliard::getBoundary(double width, double height, double dh) c
     }
 
     return boundary; // flattened n*m grid
+}
+
+void SinaiBilliard::draw(double cx, double cy) const{
+    outer.draw(cx, cy);
+    for (auto [c, r] : inner) {
+        DrawCircleLines(cx - c.x, cy - c.y, r, WHITE);
+    }
 }
 
 
