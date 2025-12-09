@@ -15,17 +15,17 @@ A C++ lightweight simulation of dynamical billiards, a classical system where a 
 
 ## *Mathematics*
 
-- Geometric reflection laws
-  v1 = v0−2(v0⋅n)n
-  where:
-  v0: Is the current velocity of the point particle
-  v1: Is the new velocity of the point particle
-  n : Normal of the intersection surface
-- Schrodinger's Equation
-  
+- Geometric reflection laws <br>
+  v1 = v0−2(v0⋅n)n <br>
+  where: <br>
+  v0: Is the current velocity of the point particle <br>
+  v1: Is the new velocity of the point particle <br>
+  n : Normal of the intersection surface <br>
+- Schrodinger's Equation <br>
+  $i\hbar \frac{\partial}{\partial t}\Psi(\hat{x},t) = \hat{H}\Psi(\hat{x},t)$
   Solved the time dependent Schrodinger Equation (TDSE) using RK4 based of the implementation found on paper [1]
-- Guassian Wave Packet
-  \Psi(\hat{x}, 0) = e^{-\left(\frac{|\hat{x}-\hat{r}_0|}{2\sigma}\right)^2} (\sin(xk) + i\cos(xk))
+- Guassian Wave Packet <br>
+  $\Psi(\hat{x}, 0) = e^{-\left(\frac{|\hat{x}-\hat{r}_0|}{2\sigma}\right)^2} (\sin(xk) + i\cos(xk))$
 
 
 
