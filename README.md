@@ -22,11 +22,11 @@ A C++ lightweight simulation of dynamical billiards, a classical system where a 
   n : Normal of the intersection surface <br>
   
 - Schrodinger's Equation <br>
-  $i\hbar \frac{\partial}{\partial t}\Psi(\hat{x},t) = \hat{H}\Psi(\hat{x},t)$
+  $i\hbar \frac{\partial}{\partial t}\Psi(\hat{x},t) = \hat{H}\Psi(\hat{x},t)$ <br>
   Solved the time dependent Schrodinger Equation (TDSE) using RK4 based of the implementation found on paper [1] 
   
 - Guassian Wave Packet <br>
-  $\Psi(\hat{x}, 0) = e^{-\left(\frac{|\hat{x}-\hat{r}_0|}{2\sigma}\right)^2} (\sin(xk) + i\cos(xk))$
+  $\Psi(\hat{x}, 0) = e^{-\left(\frac{|\hat{x}-\hat{r}_0|}{2\sigma}\right)^2} (\sin(xk) + i\cos(xk))$ [1]
 
 
 
