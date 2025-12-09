@@ -28,7 +28,9 @@ A C++ lightweight simulation of dynamical billiards, a classical system where a 
 - Guassian Wave Packet <br>
   $\Psi(\hat{x}, 0) = e^{-\left(\frac{|\hat{x}-\hat{r}_0|}{2\sigma}\right)^2} (\sin(xk) + i\cos(xk))$ [1]
 
-
+# Libraries
+- Raylib
+- Dear ImGUI
 
 ## *Bibliography*
 
